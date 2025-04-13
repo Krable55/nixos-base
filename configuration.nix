@@ -3,6 +3,7 @@
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
+    sops-nix.nixosModules.sops
   ];
 
   config = {
@@ -24,11 +25,19 @@
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
     networking.networkmanager.enable = true;
-  
+    # Setup sops-nix for secret management
+    sops.defaultSopsFile = /etc/nixos/secrets/secrets.yaml;
+    sops.age.keyFile = "/etc/nixos/secrets/age.key";
+    sops.secrets.tailscale-authkey = {
+      owner = "root";
+      group = "root";
+      path = "/var/lib/tailscale/authkey";
+    };
+
     # Enable Tailscale
     services.tailscale.enable = true;
     services.tailscale.useRoutingFeatures = "client";
-    services.tailscale.authKeyFile = "/var/lib/tailscale/authkey";
+    services.tailscale.authKeyFile = config.sops.secrets.tailscale-authkey.path;;
 
       # Set your time zone.
     time.timeZone = "America/Los_Angeles";
