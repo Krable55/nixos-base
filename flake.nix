@@ -9,18 +9,24 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixos-generators, ... }: {
-    # VM image builder (e.g., for Proxmox)
-    packages.x86_64-linux.default = nixos-generators.nixosGenerate {
-      system = "x86_64-linux";
-      modules = [ ./configuration.nix ];
+  outputs = { self, nixpkgs, nixos-generators, ... }: let
+    system = "x86_64-linux";
+    baseModule = ./configuration.nix;
+  in {
+    # For VM image building (e.g., `nix build`)
+    packages.${system}.default = nixos-generators.nixosGenerate {
+      inherit system;
+      modules = [ baseModule ];
       format = "proxmox";
     };
 
-    # NixOS config for installation or configuration management
+    # For use in nixos-rebuild (local only)
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [ ./configuration.nix ];
+      inherit system;
+      modules = [ baseModule ];
     };
+
+    # For reuse in other flakes
+    nixosModules.default = baseModule;
   };
 }
