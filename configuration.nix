@@ -26,8 +26,8 @@
 
     networking.networkmanager.enable = true;
     # Setup sops-nix for secret management
-    sops.defaultSopsFile = /etc/nixos/secrets/secrets.yaml;
-    sops.age.keyFile = "/etc/nixos/secrets/age.key";
+    sops.defaultSopsFile = ./secrets/secrets.yaml;
+    sops.age.keyFile = ./secrets/age.key;
     sops.secrets.tailscale-authkey = {
       owner = "root";
       group = "root";
@@ -37,7 +37,7 @@
     # Enable Tailscale
     services.tailscale.enable = true;
     services.tailscale.useRoutingFeatures = "client";
-    services.tailscale.authKeyFile = config.sops.secrets.tailscale-authkey.path;;
+    services.tailscale.authKeyFile = config.sops.secrets.tailscale-authkey.path;
 
       # Set your time zone.
     time.timeZone = "America/Los_Angeles";
@@ -67,9 +67,10 @@
 
     # Some sane packages we need on every system
     environment.systemPackages = with pkgs; [
-      vim  # for emergencies
-      git # for pulling nix flakes
-      # python3 # for ansible
+      vim
+      git
+      sops
+      age
     ];
 
     # Don't ask for passwords
