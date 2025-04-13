@@ -11,8 +11,21 @@ in {
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
       # If storage isn't already enabled, enable it by default
-      custom.storage.enable = lib.mkDefault true;
-      custom.storage.useMediaMount = lib.mkDefault true;
+      custom.storage = {
+        enableMediaMount = true;
+        enable = true;
+        # Only override if not already customized
+        group = config.custom.storage.group or "media";
+        groupMembers = config.custom.storage.groupMembers or [
+          "kyle"
+          "sonarr"
+          "radarr"
+          "lidarr"
+          "readarr"
+          "prowlarr"
+          "tautulli"
+        ];
+      };
     })
 
     (lib.mkIf cfg.enable {
