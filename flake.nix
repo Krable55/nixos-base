@@ -3,28 +3,31 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      flake = true;
+    };
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, nixos-generators, ... }: let
+  outputs = { self, nixpkgs, nixos-generators, sops-nix, ... }: let
     system = "x86_64-linux";
     baseModule = ./configuration.nix;
   in {
     # For VM image building (e.g., `nix build`)
     packages.${system}.default = nixos-generators.nixosGenerate {
       inherit system;
-      modules = [ baseModule ];
+      modules = [ baseModule, sops-nix.nixosModules.sops ];
       format = "proxmox";
     };
 
     # For use in nixos-rebuild (local only)
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ baseModule ];
+      modules = [ baseModule, sops-nix.nixosModules.sops ];
     };
 
     # For reuse in other flakes
