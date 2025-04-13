@@ -20,14 +20,14 @@
     # For VM image building (e.g., `nix build`)
     packages.${system}.default = nixos-generators.nixosGenerate {
       inherit system;
-      modules = [ baseModule, sops-nix.nixosModules.sops ];
+      modules = [ baseModule sops-nix.nixosModules.sops ];
       format = "proxmox";
     };
 
     # For use in nixos-rebuild (local only)
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ baseModule, sops-nix.nixosModules.sops ];
+      modules = [ baseModule sops-nix.nixosModules.sops ];
     };
 
     # For reuse in other flakes
