@@ -7,30 +7,39 @@ let
 in {
   options.custom.storage = {
     mounts = mkOption {
-      type = with types; listOf (submodule {
-        options = {
-          name = mkOption {
-            type = types.str;
-            description = "Name of the mount (used as directory name)";
-          };
-          host = mkOption {
-            type = types.str;
-            description = "IP or hostname of the NFS server";
-          };
-          remotePath = mkOption {
-            type = types.str;
-            description = "Exported remote NFS path (e.g., /MediaCenter)";
-          };
-          mountPoint = mkOption {
-            type = types.str;
-            default = config.custom.storage.mountBase + "/${config.name}";
-            description = "Where to mount this NFS share";
-          };
+    type = with types; listOf (types.submoduleWith {
+      name,
+      config,
+      ...
+    }: {
+      options = {
+        name = mkOption {
+          type = types.str;
+          default = name; # Use the name of the attribute set as the default
+          description = "Name of the mount (used as directory name)";
         };
-      });
-      default = [];
-      description = "List of NFS mounts to create.";
-    };
+
+        host = mkOption {
+          type = types.str;
+          description = "IP or hostname of the NFS server";
+        };
+
+        remotePath = mkOption {
+          type = types.str;
+          description = "Exported remote NFS path (e.g., /MediaCenter)";
+        };
+
+        mountPoint = mkOption {
+          type = types.str;
+          default = cfg.mountBase + "/${name}";
+          description = "Where to mount this NFS share";
+        };
+      };
+    });
+  default = [];
+  description = "List of NFS mounts to create.";
+};
+
 
     mountBase = mkOption {
       type = types.str;
