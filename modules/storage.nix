@@ -1,63 +1,40 @@
 { config, lib, pkgs, ... }:
 
-with lib;
-
 let
   cfg = config.custom.storage;
-
-  mounts = lib.filter (x: x != null) [
-    (if cfg.enableMediaMount then {
-      mountPoint = "/mnt/media";
-      device = "192.168.50.154:/MediaCenter";
-    } else null)
-    (if cfg.enableProxmoxMount then {
-      mountPoint = "/mnt/proxmox";
-      device = "192.168.50.154:/Proxmox";
-    } else null)
-  ];
 in {
   options.custom.storage = {
-    enableMediaMount = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Enable mounting the /mnt/media share.";
-    };
+    enable = lib.mkEnableOption "Enable storage mounts";
 
-    enableProxmoxMount = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Enable mounting the /mnt/proxmox share.";
-    };
-
-    group = mkOption {
-      type = types.str;
-      default = "media";
-      description = "Group that owns the mounted paths.";
-    };
-
-    groupMembers = mkOption {
-      type = types.listOf types.str;
-      default = [ "kyle" ];
-      description = "Users in the group for the mounts.";
-    };
+    useMediaMount = lib.mkEnableOption "Mount media share";
+    useProxmoxMount = lib.mkEnableOption "Mount proxmox share";
   };
 
-  config = {
-    users.groups.${cfg.group} = {
-      members = cfg.groupMembers;
+  config = lib.mkIf cfg.enable {
+    users.groups.${config.custom.group} = {
+      members = config.custom.groupMembers;
     };
 
-    systemd.tmpfiles.rules = map (m:
-      "d ${m.mountPoint} 0775 ${cfg.group} ${cfg.group} -"
-    ) mounts;
+    fileSystems = lib.mkMerge ([
+      (lib.mkIf cfg.useMediaMount {
+        "/mnt/media" = {
+          device = "192.168.50.154:/MediaCenter";
+          fsType = "nfs";
+          options = [ "defaults" "x-systemd.automount" ];
+        };
+      })
+      (lib.mkIf cfg.useProxmoxMount {
+        "/mnt/proxmox" = {
+          device = "192.168.50.154:/Proxmox";
+          fsType = "nfs";
+          options = [ "defaults" "x-systemd.automount" ];
+        };
+      })
+    ]);
 
-    fileSystems = builtins.listToAttrs (map (m: {
-      name = m.mountPoint;
-      value = {
-        device = m.device;
-        fsType = "nfs";
-        options = [ "defaults" "x-systemd.automount" ];
-      };
-    }) mounts);
+    systemd.tmpfiles.rules = [
+      (lib.mkIf cfg.useMediaMount "d /mnt/media 0775 ${config.custom.group} ${config.custom.group} -")
+      (lib.mkIf cfg.useProxmoxMount "d /mnt/proxmox 0775 ${config.custom.group} ${config.custom.group} -")
+    ];
   };
 }
