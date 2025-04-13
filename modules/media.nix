@@ -1,48 +1,47 @@
 { config, lib, pkgs, ... }:
 
-let
-  cfg = config.custom.media;
-  storageCfg = config.custom.storage or {};
-in {
+{
   options.custom.media = {
     enable = lib.mkEnableOption "Enable media apps";
   };
 
-  config = lib.mkMerge [
-    (lib.mkIf cfg.enable {
-      # If storage isn't already enabled, enable it by default
-      custom.storage = {
-        enableMediaMount = true;
+  config = lib.mkIf config.custom.media.enable (
+    let
+      storageCfg = config.custom.storage;
+    in {
+      users.groups.${storageCfg.group} = {
+        members = storageCfg.groupMembers;
+      };
+
+      services.sonarr = {
         enable = true;
-        # Only override if not already customized
-        group = config.custom.storage.group or "media";
-        groupMembers = config.custom.storage.groupMembers or [
-          "kyle"
-          "sonarr"
-          "radarr"
-          "lidarr"
-          "readarr"
-          "prowlarr"
-          "tautulli"
-        ];
+        openFirewall = true;
+        group = storageCfg.group;
       };
-    })
-
-    (lib.mkIf cfg.enable {
-      # The rest of your media app configuration
-      users.groups.${config.custom.group} = {
-        members = config.custom.groupMembers;
+      services.radarr = {
+        enable = true;
+        openFirewall = true;
+        group = storageCfg.group;
       };
-
-      services.sonarr = { enable = true; openFirewall = true; group = config.custom.group; };
-      services.radarr = { enable = true; openFirewall = true; group = config.custom.group; };
-      services.lidarr = { enable = true; openFirewall = true; group = config.custom.group; };
-      services.readarr = { enable = true; openFirewall = true; group = config.custom.group; };
-      services.tautulli = { enable = true; openFirewall = true; group = config.custom.group; };
+      services.lidarr = {
+        enable = true;
+        openFirewall = true;
+        group = storageCfg.group;
+      };
+      services.readarr = {
+        enable = true;
+        openFirewall = true;
+        group = storageCfg.group;
+      };
+      services.tautulli = {
+        enable = true;
+        openFirewall = true;
+        group = storageCfg.group;
+      };
 
       users.users.prowlarr = {
         isSystemUser = true;
-        group = config.custom.group;
+        group = storageCfg.group;
         home = "/mnt/media/apps/prowlarr";
         createHome = false;
       };
@@ -60,7 +59,7 @@ in {
           ExecStart = "${pkgs.prowlarr}/bin/Prowlarr -nobrowser -data=/mnt/media/apps/prowlarr";
           WorkingDirectory = "/mnt/media/apps/prowlarr";
           User = "prowlarr";
-          Group = config.custom.group;
+          Group = storageCfg.group;
           StandardOutput = "journal";
           StandardError = "journal";
         };
@@ -84,6 +83,6 @@ in {
       networking.firewall.allowedTCPPorts = [
         5055 8989 7878 8686 8787 8181 9696
       ];
-    })
-  ];
+    }
+  );
 }

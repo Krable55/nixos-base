@@ -8,11 +8,23 @@ in {
 
     useMediaMount = lib.mkEnableOption "Mount media share";
     useProxmoxMount = lib.mkEnableOption "Mount proxmox share";
+
+    group = lib.mkOption {
+      type = lib.types.str;
+      default = "media";
+      description = "The group that owns mounted directories.";
+    };
+
+    groupMembers = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Users that should be added to the group.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    users.groups.${config.custom.group} = {
-      members = config.custom.groupMembers;
+    users.groups.${cfg.group} = {
+      members = cfg.groupMembers;
     };
 
     fileSystems = lib.mkMerge ([
@@ -32,9 +44,9 @@ in {
       })
     ]);
 
-    systemd.tmpfiles.rules = [
-      (lib.mkIf cfg.useMediaMount "d /mnt/media 0775 ${config.custom.group} ${config.custom.group} -")
-      (lib.mkIf cfg.useProxmoxMount "d /mnt/proxmox 0775 ${config.custom.group} ${config.custom.group} -")
-    ];
+    systemd.tmpfiles.rules = lib.mkMerge ([
+      (lib.mkIf cfg.useMediaMount [ "d /mnt/media 0775 ${cfg.group} ${cfg.group} -" ])
+      (lib.mkIf cfg.useProxmoxMount [ "d /mnt/proxmox 0775 ${cfg.group} ${cfg.group} -" ])
+    ]);
   };
 }

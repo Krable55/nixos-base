@@ -25,6 +25,7 @@
         self.nixosModules.default
         self.nixosModules.storage
         self.nixosModules.forgejo
+        self.nixosModules.media
         sops-nix.nixosModules.sops
       ];
       format = "proxmox";
@@ -37,6 +38,7 @@
         self.nixosModules.default
         self.nixosModules.storage
         self.nixosModules.forgejo
+        self.nixosModules.media
         sops-nix.nixosModules.sops
       ];
     };
@@ -45,7 +47,9 @@
     nixosModules = {
       default   = import ./configuration.nix;
       storage   = import ./modules/storage.nix;
+      media   = import ./modules/media.nix;
       forgejo   = import ./modules/forgejo.nix;
+
     };
   };
 }
