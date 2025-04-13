@@ -3,17 +3,19 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       flake = true;
     };
+
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, nixos-generators, sops-nix, ... }: let
+  outputs = { self, nixpkgs, nixos-generators, sops-nix, ... }@inputs: let
     system = "x86_64-linux";
   in {
     # For VM image building (e.g., `nix build`)
@@ -21,19 +23,29 @@
       inherit system;
       modules = [
         self.nixosModules.default
+        self.nixosModules.storage
+        # self.nixosModules.tailscale
         sops-nix.nixosModules.sops
       ];
       format = "proxmox";
     };
 
+    # System config for use with `nixos-rebuild`
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
         self.nixosModules.default
+        self.nixosModules.storage
+        # self.nixosModules.tailscale
         sops-nix.nixosModules.sops
       ];
     };
 
-    nixosModules.default = import ./configuration.nix;
+    # Export reusable modules
+    nixosModules = {
+      default   = import ./configuration.nix;
+      storage   = import ./modules/storage.nix;
+      # tailscale = import ./modules/tailscale.nix;
+    };
   };
 }
