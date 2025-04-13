@@ -26,7 +26,7 @@
     networking.networkmanager.enable = true;
     # Setup sops-nix for secret management
     sops.defaultSopsFile = ./secrets/secrets.yaml;
-    sops.age.keyFile = ./secrets/age.key;
+    sops.age.keyFile = "/etc/nixos/secrets/age.key";
     sops.secrets.tailscale-authkey = {
       owner = "root";
       group = "root";
