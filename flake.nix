@@ -24,7 +24,7 @@
       modules = [
         self.nixosModules.default
         self.nixosModules.storage
-        # self.nixosModules.tailscale
+        self.nixosModules.forgejo
         sops-nix.nixosModules.sops
       ];
       format = "proxmox";
@@ -36,7 +36,7 @@
       modules = [
         self.nixosModules.default
         self.nixosModules.storage
-        # self.nixosModules.tailscale
+        self.nixosModules.forgejo
         sops-nix.nixosModules.sops
       ];
     };
@@ -45,7 +45,7 @@
     nixosModules = {
       default   = import ./configuration.nix;
       storage   = import ./modules/storage.nix;
-      # tailscale = import ./modules/tailscale.nix;
+      forgejo   = import ./modules/forgejo.nix;
     };
   };
 }
