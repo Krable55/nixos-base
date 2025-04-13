@@ -64,6 +64,7 @@ in
       git
       sops
       age
+      htop
     ];
 
     # Don't ask for passwords
@@ -85,6 +86,7 @@ in
      packages = with pkgs; [
       vim
       git
+      htop
      ];
      openssh.authorizedKeys.keys = [
        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMh4QcZWNLqRMaj0D5iKH3FDZ8n/rKJR6XFLNQs7bWsa my key for nixos"     
