@@ -15,22 +15,25 @@
 
   outputs = { self, nixpkgs, nixos-generators, sops-nix, ... }: let
     system = "x86_64-linux";
-    baseModule = ./configuration.nix;
   in {
     # For VM image building (e.g., `nix build`)
     packages.${system}.default = nixos-generators.nixosGenerate {
       inherit system;
-      modules = [ baseModule sops-nix.nixosModules.sops ];
+      modules = [
+        self.nixosModules.default
+        sops-nix.nixosModules.sops
+      ];
       format = "proxmox";
     };
 
-    # For use in nixos-rebuild (local only)
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ baseModule sops-nix.nixosModules.sops ];
+      modules = [
+        self.nixosModules.default
+        sops-nix.nixosModules.sops
+      ];
     };
 
-    # For reuse in other flakes
-    nixosModules.default = baseModule;
+    nixosModules.default = import ./configuration.nix;
   };
 }

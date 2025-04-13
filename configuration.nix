@@ -6,7 +6,7 @@
   ];
 
   config = {
-    #Provide a default hostname
+    # Provide a default hostname
     networking.hostName = lib.mkDefault "base";
     networking.useDHCP = lib.mkDefault true;
     
