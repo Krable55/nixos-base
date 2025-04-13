@@ -4,59 +4,41 @@ with lib;
 
 let
   cfg = config.custom.storage;
+
+  mounts = lib.filter (x: x != null) [
+    (if cfg.enableMediaMount then {
+      mountPoint = "/mnt/media";
+      device = "192.168.50.154:/MediaCenter";
+    } else null)
+    (if cfg.enableProxmoxMount then {
+      mountPoint = "/mnt/proxmox";
+      device = "192.168.50.154:/ProxmoxShare";
+    } else null)
+  ];
 in {
   options.custom.storage = {
-    mounts = mkOption {
-    type = with types; listOf (types.submoduleWith {
-      name,
-      config,
-      ...
-    }: {
-      options = {
-        name = mkOption {
-          type = types.str;
-          default = name; # Use the name of the attribute set as the default
-          description = "Name of the mount (used as directory name)";
-        };
+    enableMediaMount = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable mounting the /mnt/media share.";
+    };
 
-        host = mkOption {
-          type = types.str;
-          description = "IP or hostname of the NFS server";
-        };
-
-        remotePath = mkOption {
-          type = types.str;
-          description = "Exported remote NFS path (e.g., /MediaCenter)";
-        };
-
-        mountPoint = mkOption {
-          type = types.str;
-          default = cfg.mountBase + "/${name}";
-          description = "Where to mount this NFS share";
-        };
-      };
-    });
-  default = [];
-  description = "List of NFS mounts to create.";
-};
-
-
-    mountBase = mkOption {
-      type = types.str;
-      default = "/mnt";
-      description = "Base directory for all NFS mounts.";
+    enableProxmoxMount = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable mounting the /mnt/proxmox share.";
     };
 
     group = mkOption {
       type = types.str;
       default = "media";
-      description = "Group that will own the mounted paths.";
+      description = "Group that owns the mounted paths.";
     };
 
     groupMembers = mkOption {
       type = types.listOf types.str;
       default = [ "kyle" ];
-      description = "Users who should be in the media group.";
+      description = "Users in the group for the mounts.";
     };
   };
 
@@ -65,17 +47,17 @@ in {
       members = cfg.groupMembers;
     };
 
-    systemd.tmpfiles.rules = map (mount:
-      "d ${mount.mountPoint} 0775 ${cfg.group} ${cfg.group} -"
-    ) cfg.mounts;
+    systemd.tmpfiles.rules = map (m:
+      "d ${m.mountPoint} 0775 ${cfg.group} ${cfg.group} -"
+    ) mounts;
 
-    fileSystems = builtins.listToAttrs (map (mount: {
-      name = mount.mountPoint;
+    fileSystems = builtins.listToAttrs (map (m: {
+      name = m.mountPoint;
       value = {
-        device = "${mount.host}:${mount.remotePath}";
+        device = m.device;
         fsType = "nfs";
         options = [ "defaults" "x-systemd.automount" ];
       };
-    }) cfg.mounts);
+    }) mounts);
   };
 }
