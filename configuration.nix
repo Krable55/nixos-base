@@ -25,6 +25,7 @@
 
     networking.networkmanager.enable = true;
     # Setup sops-nix for secret management
+    sops.validateSopsFiles = false;
     sops.defaultSopsFile = ./secrets/secrets.yaml;
     sops.age.keyFile = "/etc/nixos/secrets/age.key";
     sops.secrets.tailscale-authkey = {
