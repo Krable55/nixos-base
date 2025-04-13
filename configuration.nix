@@ -3,7 +3,6 @@
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
-    sops-nix.nixosModules.sops
   ];
 
   config = {
