@@ -12,7 +12,7 @@ let
     } else null)
     (if cfg.enableProxmoxMount then {
       mountPoint = "/mnt/proxmox";
-      device = "192.168.50.154:/ProxmoxShare";
+      device = "192.168.50.154:/Proxmox";
     } else null)
   ];
 in {
