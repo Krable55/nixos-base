@@ -14,7 +14,9 @@
       x86_64-linux = {
         default = nixos-generators.nixosGenerate {
           system = "x86_64-linux";
-          modules = [ ./configuration.nix ];
+          modules = [
+            ./configuration.nix
+          ];
           format = "proxmox";
         };
       };
@@ -23,7 +25,9 @@
     nixosConfigurations = {
       base = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        modules = [ ./configuration.nix ];
+        modules = [
+          ./configuration.nix
+        ];
       };
     };
   };
