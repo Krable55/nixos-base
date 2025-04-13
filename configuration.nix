@@ -1,10 +1,13 @@
 { config, pkgs, modulesPath, lib, system, ... }:
 
+let
+  hasAgeKey = builtins.pathExists ./secrets/age.key;
+in
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
-
+  
   config = {
     # Provide a default hostname
     networking.hostName = lib.mkDefault "base";
@@ -25,38 +28,28 @@
 
     networking.networkmanager.enable = true;
     # Setup sops-nix for secret management
-    sops.validateSopsFiles = false;
-    sops.defaultSopsFile = ./secrets/secrets.yaml;
-    sops.age.keyFile = "/etc/nixos/secrets/age.key";
-    sops.secrets.tailscale-authkey = {
-      owner = "root";
-      group = "root";
-      path = "/var/lib/tailscale/authkey";
+    sops = lib.mkIf hasAgeKey {
+      defaultSopsFile = ./secrets/secrets.yaml;
+      age.keyFile = ./secrets/age.key;
+      secrets.tailscale-authkey = {
+        owner = "root";
+        group = "root";
+        path = "/var/lib/tailscale/authkey";
+      };
     };
 
     # Enable Tailscale
-    services.tailscale.enable = true;
-    services.tailscale.useRoutingFeatures = "client";
-    services.tailscale.authKeyFile = config.sops.secrets.tailscale-authkey.path;
-
+   services.tailscale = lib.mkIf hasAgeKey {
+      enable = true;
+      useRoutingFeatures = "client";
+      authKeyFile = config.sops.secrets.tailscale-authkey.path;
+    };
       # Set your time zone.
     time.timeZone = "America/Los_Angeles";
 
     # Select internationalisation properties.
     i18n.defaultLocale = "en_US.UTF-8";
 
-    i18n.extraLocaleSettings = {
-      LC_ADDRESS = "en_US.UTF-8";
-      LC_IDENTIFICATION = "en_US.UTF-8";
-      LC_MEASUREMENT = "en_US.UTF-8";
-      LC_MONETARY = "en_US.UTF-8";
-      LC_NAME = "en_US.UTF-8";
-      LC_NUMERIC = "en_US.UTF-8";
-      LC_PAPER = "en_US.UTF-8";
-      LC_TELEPHONE = "en_US.UTF-8";
-      LC_TIME = "en_US.UTF-8";
-    };
-    
     # Enable mDNS for `hostname.local` addresses
     services.avahi.enable = true;
     services.avahi.nssmdns4 = true;
