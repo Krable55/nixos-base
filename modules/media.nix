@@ -33,36 +33,15 @@
         openFirewall = true;
         group = storageCfg.group;
       };
-      services.tautulli = {
+      services.prowlarr = {
         enable = true;
         openFirewall = true;
         group = storageCfg.group;
       };
-
-      users.users.prowlarr = {
-        isSystemUser = true;
+      services.tautulli = {
+        enable = true;
+        openFirewall = true;
         group = storageCfg.group;
-        home = "/mnt/media/apps/prowlarr";
-        createHome = false;
-      };
-
-      system.activationScripts.prowlarrSymlink.text = ''
-        ln -sfn /mnt/media/apps/prowlarr /var/lib/prowlarr
-      '';
-
-      systemd.services.prowlarr = {
-        description = "Prowlarr";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" "mnt-media.mount" ];
-        requires = [ "mnt-media.mount" ];
-        serviceConfig = {
-          ExecStart = "${pkgs.prowlarr}/bin/Prowlarr -nobrowser -data=/mnt/media/apps/prowlarr";
-          WorkingDirectory = "/mnt/media/apps/prowlarr";
-          User = "prowlarr";
-          Group = storageCfg.group;
-          StandardOutput = "journal";
-          StandardError = "journal";
-        };
       };
 
       virtualisation.docker.enable = true;
