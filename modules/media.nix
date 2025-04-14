@@ -1,18 +1,37 @@
 { config, lib, pkgs, ... }:
 
-{
+let
+  cfg = config.custom.media;
+  storageCfg = config.custom.storage;
+in {
   options.custom.media = {
-    enable = lib.mkEnableOption "Enable media apps";
+    enable = lib.mkEnableOption "Enable media apps and services";
   };
 
-  config = lib.mkIf config.custom.media.enable (
-    let
-      storageCfg = config.custom.storage;
-    in {
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    # Ensure storage module is enabled with sane defaults
+    {
+      custom.storage.enable = lib.mkDefault true;
+      custom.storage.useMediaMount = lib.mkDefault true;
+      custom.storage.group = lib.mkDefault "media";
+      custom.storage.groupMembers = lib.mkDefault [
+        "kyle"
+        "sonarr"
+        "radarr"
+        "lidarr"
+        "readarr"
+        "prowlarr"
+        "tautulli"
+      ];
+    }
+
+    {
+      # Optional: reinforce group membership for completeness
       users.groups.${storageCfg.group} = {
         members = storageCfg.groupMembers;
       };
 
+      # Media apps
       services.sonarr = {
         enable = true;
         openFirewall = true;
@@ -44,6 +63,7 @@
         group = storageCfg.group;
       };
 
+      # Overseerr via Docker
       virtualisation.docker.enable = true;
       virtualisation.oci-containers.backend = "docker";
       virtualisation.oci-containers.containers.overseerr = {
@@ -63,5 +83,5 @@
         5055 8989 7878 8686 8787 8181 9696
       ];
     }
-  );
+  ]);
 }

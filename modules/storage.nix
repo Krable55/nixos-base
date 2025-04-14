@@ -17,7 +17,7 @@ in {
 
     groupMembers = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [];
+      default = ["kyle"];
       description = "Users that should be added to the group.";
     };
   };
