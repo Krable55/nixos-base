@@ -7,7 +7,6 @@
     user = "forgejo";
     group = "forgejo";
 
-    # Web config
     settings = {
       server = {
         DOMAIN = "git.local";
@@ -26,8 +25,6 @@
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ 3000 ];
-
   users.users.forgejo = {
     isSystemUser = true;
     home = "/var/lib/forgejo";
@@ -36,4 +33,14 @@
   };
 
   users.groups.forgejo = { };
+
+  # ✅ Correctly placed top-level user declaration
+  users.users.forgejo-runner = {
+    isSystemUser = true;
+    group = "forgejo"; # or "nogroup"
+    home = "/var/lib/forgejo-runner";
+    createHome = true;
+  };
+
+  networking.firewall.allowedTCPPorts = [ 3000 ];
 }
