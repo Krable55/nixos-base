@@ -2,19 +2,16 @@
 
 let
   cfg = config.custom.media;
-  storageCfg = config.custom.storage;
 in {
   options.custom.media = {
     enable = lib.mkEnableOption "Enable media apps and services";
   };
 
   config = lib.mkIf cfg.enable (lib.mkMerge [
-    # Ensure storage module is enabled with sane defaults
+    # Storage configuration: media group + NFS mount
     {
-      custom.storage.enable = lib.mkDefault true;
-      custom.storage.useMediaMount = lib.mkDefault true;
-      custom.storage.group = lib.mkDefault "media";
-      custom.storage.groupMembers = lib.mkDefault [
+      # Define media group and members
+      users.groups.media.members = [
         "kyle"
         "sonarr"
         "radarr"
@@ -23,44 +20,51 @@ in {
         "prowlarr"
         "tautulli"
       ];
+
+      # Create mount point with correct permissions
+      systemd.tmpfiles.rules = [
+        "d /mnt/media 0775 media media -"
+      ];
+
+      # Define the NFS mount
+      fileSystems."/mnt/media" = {
+        device = "192.168.50.154:/MediaCenter";
+        fsType = "nfs";
+        options = [ "defaults" "x-systemd.automount" ];
+      };
     }
 
+    # Media apps + overseerr config
     {
-      # Optional: reinforce group membership for completeness
-      users.groups.${storageCfg.group} = {
-        members = storageCfg.groupMembers;
-      };
-
-      # Media apps
       services.sonarr = {
         enable = true;
         openFirewall = true;
-        group = storageCfg.group;
+        group = "media";
       };
       services.radarr = {
         enable = true;
         openFirewall = true;
-        group = storageCfg.group;
+        group = "media";
       };
       services.lidarr = {
         enable = true;
         openFirewall = true;
-        group = storageCfg.group;
+        group = "media";
       };
       services.readarr = {
         enable = true;
         openFirewall = true;
-        group = storageCfg.group;
+        group = "media";
       };
       services.prowlarr = {
         enable = true;
         openFirewall = true;
-        # group = storageCfg.group;
+        # group = "media"; # doesn't support custom group yet
       };
       services.tautulli = {
         enable = true;
         openFirewall = true;
-        group = storageCfg.group;
+        group = "media";
       };
 
       # Overseerr via Docker

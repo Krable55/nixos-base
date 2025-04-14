@@ -23,7 +23,6 @@
       inherit system;
       modules = [
         self.nixosModules.default
-        self.nixosModules.storage
         self.nixosModules.forgejo
         self.nixosModules.media
         sops-nix.nixosModules.sops
@@ -36,7 +35,6 @@
       inherit system;
       modules = [
         self.nixosModules.default
-        self.nixosModules.storage
         self.nixosModules.forgejo
         self.nixosModules.media
         sops-nix.nixosModules.sops
@@ -46,10 +44,8 @@
     # Export reusable modules
     nixosModules = {
       default   = import ./configuration.nix;
-      storage   = import ./modules/storage.nix;
       media   = import ./modules/media.nix;
       forgejo   = import ./modules/forgejo.nix;
-
     };
   };
 }
