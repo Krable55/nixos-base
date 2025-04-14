@@ -36,7 +36,7 @@
       services.prowlarr = {
         enable = true;
         openFirewall = true;
-        group = storageCfg.group;
+        # group = storageCfg.group;
       };
       services.tautulli = {
         enable = true;
