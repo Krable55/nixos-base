@@ -7,71 +7,67 @@ in {
     enable = lib.mkEnableOption "Enable media apps and services";
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    # Storage configuration: media group + NFS mount
-    {
-      # Define media group and members
-      users.groups.media.members = [
-        "kyle"
-        "sonarr"
-        "radarr"
-        "lidarr"
-        "readarr"
-        "prowlarr"
-        "tautulli"
-      ];
+  config = lib.mkIf cfg.enable (lib.mkMerge lib.mkMerge [
+  {
+    users.groups.media.members = [
+      "kyle"
+      "sonarr"
+      "radarr"
+      "lidarr"
+      "readarr"
+      "prowlarr"
+      "tautulli"
+    ];
 
-      # Create mount point with correct permissions
-      systemd.tmpfiles.rules = [
-        "d /mnt/media 0775 media media -"
-      ];
+    systemd.tmpfiles.rules = [
+      "d /mnt/media 0775 media media -"
+    ];
 
-      # Define the NFS mount
-      fileSystems."/mnt/media" = lib.mkForce {
-        device = "192.168.50.154:/MediaCenter";
-        fsType = "nfs";
-        options = [ "x-systemd.automount" "noauto" "_netdev" ];
-      };
-    }
+    services = {
+      nfs.client.enable = true;
 
-    # Media apps + overseerr config
-    {
-      services.nfs.client.enable = true;
-      services.sonarr = {
+      sonarr = {
         enable = true;
         openFirewall = true;
         group = "media";
       };
-      services.radarr = {
+      radarr = {
         enable = true;
         openFirewall = true;
         group = "media";
       };
-      services.lidarr = {
+      lidarr = {
         enable = true;
         openFirewall = true;
         group = "media";
       };
-      services.readarr = {
+      readarr = {
         enable = true;
         openFirewall = true;
         group = "media";
       };
-      services.prowlarr = {
+      prowlarr = {
         enable = true;
         openFirewall = true;
-        # group = "media"; # doesn't support custom group yet
+        # group = "media";
       };
-      services.tautulli = {
+      tautulli = {
         enable = true;
         openFirewall = true;
         group = "media";
       };
+    };
 
-      # Overseerr via Docker
-      virtualisation.docker.enable = true;
-      virtualisation.oci-containers.backend = "docker";
-      virtualisation.oci-containers.containers.overseerr = {
+    fileSystems."/mnt/media" = lib.mkForce {
+      device = "192.168.50.154:/MediaCenter";
+      fsType = "nfs";
+      options = [ "x-systemd.automount" "noauto" "_netdev" ];
+    };
+
+    virtualisation = {
+      docker.enable = true;
+      oci-containers.backend = "docker";
+      oci-containers.containers.overseerr = {
         image = "lscr.io/linuxserver/overseerr:latest";
         ports = [ "5055:5055" ];
         environment = {
@@ -83,10 +79,11 @@ in {
           "/mnt/media/apps/overseer:/config:rw"
         ];
       };
+    };
 
-      networking.firewall.allowedTCPPorts = [
-        5055 8989 7878 8686 8787 8181 9696
-      ];
-    }
-  ]);
+    networking.firewall.allowedTCPPorts = [
+      5055 8989 7878 8686 8787 8181 9696
+    ];
+  }
+]);
 }
