@@ -27,6 +27,7 @@ in {
       ];
 
       # Define the NFS mount
+      services.nfs.client.enable = true;
       fileSystems."/mnt/media" = {
         device = "192.168.50.154:/MediaCenter";
         fsType = "nfs";
