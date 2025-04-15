@@ -27,8 +27,7 @@ in {
       ];
 
       # Define the NFS mount
-      services.nfs.client.enable = true;
-      fileSystems."/mnt/media" = lib.mkForce  {
+      fileSystems."/mnt/media" = lib.mkForce {
         device = "192.168.50.154:/MediaCenter";
         fsType = "nfs";
         options = [ "x-systemd.automount" "noauto" "_netdev" ];
@@ -37,6 +36,7 @@ in {
 
     # Media apps + overseerr config
     {
+      services.nfs.client.enable = true;
       services.sonarr = {
         enable = true;
         openFirewall = true;
