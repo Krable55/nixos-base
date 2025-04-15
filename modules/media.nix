@@ -62,7 +62,13 @@ in {
     fileSystems."/mnt/media" = lib.mkForce {
       device = "192.168.50.154:/MediaCenter";
       fsType = "nfs";
-      options = [ "x-systemd.automount" "noauto" "_netdev" ];
+      options = [ 
+        "x-systemd.automount"
+        "noauto"
+        "x-systemd.idle-timeout=300"
+        "noatime"
+        "nfsvers=4.0"
+       ];
     };
 
     virtualisation.docker.enable = true;
