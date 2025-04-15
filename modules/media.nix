@@ -31,7 +31,7 @@ in {
       fileSystems."/mnt/media" = {
         device = "192.168.50.154:/MediaCenter";
         fsType = "nfs";
-        options = [ "defaults" "x-systemd.automount" ];
+        options = [ "x-systemd.automount" "noauto" ];
       };
     }
 
