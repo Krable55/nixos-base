@@ -7,7 +7,7 @@ in {
     enable = lib.mkEnableOption "Enable media apps and services";
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge lib.mkMerge [
+  config = lib.mkIf cfg.enable (lib.mkMerge [
   {
     users.groups.media.members = [
       "kyle"
