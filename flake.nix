@@ -22,11 +22,11 @@
     packages.${system}.default = nixos-generators.nixosGenerate {
       inherit system;
       modules = [
-        self.nixosModules.default
-        self.nixosModules.forgejo
         self.nixosModules.media
+        self.nixosModules.forgejo
         self.nixosModules.colmena
         sops-nix.nixosModules.sops
+        self.nixosModules.default
       ];
       format = "proxmox";
     };
@@ -35,11 +35,11 @@
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        self.nixosModules.default
-        self.nixosModules.forgejo
         self.nixosModules.media
+        self.nixosModules.forgejo
         self.nixosModules.colmena
         sops-nix.nixosModules.sops
+        self.nixosModules.default
       ];
     };
 
