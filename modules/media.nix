@@ -59,6 +59,7 @@ in {
       group = "media";
     };
 
+    boot.supportedFilesystems = [ "nfs" ];
     fileSystems."/mnt/media" = lib.mkForce {
       device = "192.168.50.154:/MediaCenter";
       fsType = "nfs";
