@@ -33,11 +33,7 @@
               group = "media";
               mode = "0775";
             };
-            downloads = {
-              device = "192.168.50.154:/Downloads";
-            };
           };
-       
         })
       ];
     };
