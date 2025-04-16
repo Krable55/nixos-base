@@ -54,6 +54,7 @@ in
 
     # Allow nfs
 #    services.nfs.client.enable = lib.mkDefault true;
+    systemd.network.wait-online.enable = true;
     boot.initrd.kernelModules = [ "nfs" "nfs4" ];
 
     # Enable mDNS for `hostname.local` addresses
