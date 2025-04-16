@@ -12,7 +12,7 @@ in
     # Provide a default hostname
     networking.hostName = lib.mkDefault "base";
     networking.useDHCP = lib.mkDefault true;
-    
+
     # Enable QEMU Guest for Proxmox
     services.qemuGuest.enable = lib.mkDefault true;
 
@@ -27,6 +27,7 @@ in
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
     networking.networkmanager.enable = true;
+
     # Setup sops-nix for secret management
     sops = lib.mkIf hasAgeKey {
       defaultSopsFile = ./secrets/secrets.yaml;
@@ -39,16 +40,21 @@ in
     };
 
     # Enable Tailscale
-   services.tailscale = lib.mkIf hasAgeKey {
+    services.tailscale = lib.mkIf hasAgeKey {
       enable = true;
       useRoutingFeatures = "client";
       authKeyFile = config.sops.secrets.tailscale-authkey.path;
     };
-      # Set your time zone.
+
+    # Set the time zone.
     time.timeZone = "America/Los_Angeles";
 
     # Select internationalisation properties.
     i18n.defaultLocale = "en_US.UTF-8";
+
+    # Allow nfs
+    services.nfs.client.enable = lib.mkDefault true;
+    boot.initrd.kernelModules = [ "nfs" "nfs4" ]
 
     # Enable mDNS for `hostname.local` addresses
     services.avahi.enable = true;
@@ -65,6 +71,7 @@ in
       sops
       age
       htop
+      nfs-utils
     ];
 
     # Don't ask for passwords

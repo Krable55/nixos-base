@@ -1,0 +1,31 @@
+{
+  description = "Extended NixOS Config with Media center";
+
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    base = {
+      url = "github:Krable55/nixos-base";
+      flake = true;
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      flake = true;
+    };
+  };
+
+  outputs = { self, nixpkgs, base, sops-nix, ... }: {
+    nixosConfigurations.nixos-builder = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+
+      modules = [
+        sops-nix.nixosModules.sops
+        base.nixosModules.default
+        base.nixosModules.media
+        ({ ... }: {
+          custom.colmena.enable = true;
+          custom.media.enable = true;
+        })
+      ];
+    };
+  };
+}
