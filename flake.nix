@@ -51,7 +51,7 @@
       media   = import ./modules/media.nix;
       forgejo   = import ./modules/forgejo.nix;
       colmena = import ./modules/colmena.nix;
-      nfs = import ./modules/nfs-mounts.nix;
+      nfs = import ./modules/nfs.nix;
     };
   };
 }
