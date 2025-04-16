@@ -53,7 +53,7 @@ in
     i18n.defaultLocale = "en_US.UTF-8";
 
     # Allow nfs
-    services.nfs.client.enable = lib.mkDefault true;
+#    services.nfs.client.enable = lib.mkDefault true;
     boot.initrd.kernelModules = [ "nfs" "nfs4" ];
 
     # Enable mDNS for `hostname.local` addresses
