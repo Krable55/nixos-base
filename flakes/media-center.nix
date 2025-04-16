@@ -21,9 +21,23 @@
         sops-nix.nixosModules.sops
         base.nixosModules.default
         base.nixosModules.media
+        base.nixosModules.nfs
         ({ ... }: {
-          custom.colmena.enable = true;
           custom.media.enable = true;
+
+          custom.nfs.enable = true;
+          custom.nfs.mounts = {
+            media = {
+              device = "192.168.50.154:/MediaCenter";
+              owner = "media";
+              group = "media";
+              mode = "0775";
+            };
+            downloads = {
+              device = "192.168.50.154:/Downloads";
+            };
+          };
+       
         })
       ];
     };
