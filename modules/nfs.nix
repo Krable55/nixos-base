@@ -62,7 +62,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    services.nfs.client.enable = true;
+    # services.nfs.client.enable = true;
 
     fileSystems = lib.mapAttrs' mkMount cfg.mounts;
 
