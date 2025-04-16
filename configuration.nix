@@ -54,7 +54,7 @@ in
 
     # Allow nfs
     services.nfs.client.enable = lib.mkDefault true;
-    boot.initrd.kernelModules = [ "nfs" "nfs4" ]
+    boot.initrd.kernelModules = [ "nfs" "nfs4" ];
 
     # Enable mDNS for `hostname.local` addresses
     services.avahi.enable = true;
