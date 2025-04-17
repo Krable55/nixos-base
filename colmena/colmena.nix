@@ -1,27 +1,56 @@
 {
-  description = "My NixOS fleet managed by Colmena";
+  description = "Extended NixOS Config with Forgejo + Media";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    colmena.url = "github:zhaofengli/colmena";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    base = {
+      url = "github:Krable55/nixos-base";
+      flake = true;
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      flake = true;
+    };
   };
 
-  outputs = { self, nixpkgs, colmena, ... }: let
-    system = "x86_64-linux";
-    pkgs = import nixpkgs { inherit system; };
-  in {
-    nixosConfigurations = {
-      media = import ../hosts/media-center.nix;
-    };
+  custom.nfs.enable = true;
+  outputs = { self, nixpkgs, base, sops-nix, ... }: {
+    nixosConfigurations.nixos-builder = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
 
-    colmena = {
-      meta = {
-        nixpkgs = nixpkgs;
-      };
+      modules = [
+        sops-nix.nixosModules.sops
+        base.nixosModules.default
+        base.nixosModules.colmena
+        base.nixosModules.forgejo
+        base.nixosModules.backup
+        base.nixosModules.nfs
+        ({ ... }: {
+          custom.colmena.enable = true;
+          custom.forgejo.enable = true;
+          custom.nfs.mounts = {
+            backups = {
+              device = "192.168.50.154:/Backups";
+              owner = "media";
+              group = "media";
+              mode = "0775";
+            };
+          };
 
-      nodes = {
-        media = { imports = [ ../hosts/media-center.nix ]; };  
-      };
+          custom.backup = {
+            enable = true;
+            srcDir = "/var/lib";
+            includeDirs = [ "forgejo" ];
+            targetDir = "/mnt/backups/colmena-data";
+            interval = "daily";
+            retention = {
+              daily = 5;
+              weekly = 2;
+              monthly = 6;
+            };
+          };
+        })
+      ];
     };
   };
 }

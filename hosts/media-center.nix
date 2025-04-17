@@ -1,5 +1,5 @@
 {
-  description = "Extended NixOS Config with Media center";
+  description = "Extended NixOS Config for Media center";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
