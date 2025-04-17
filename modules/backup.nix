@@ -11,8 +11,8 @@ in {
 
     scriptPath = lib.mkOption {
       type = lib.types.path;
-      default = ./modules/.bin/rsync.sh;
-      description = "Path to the rsync backup script file (e.g. ./modules/.bin/rsync.sh).";
+      default = ./.bin/rsync.sh;
+      description = "Path to the rsync backup script file (e.g. ./.bin/rsync.sh).";
     };
 
     interval = lib.mkOption {
