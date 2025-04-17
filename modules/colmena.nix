@@ -19,14 +19,14 @@ in {
     };
 
     manifestDir = lib.mkOption {
-      type = lib.types.str;
+      type = lib.types.path;
       default = "/etc/colmena";
       description = "Path to store Colmena manifest files";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.colmena ];
+    environment.systemPackages = [ pkgs.colmena pkgs.git ];
 
     users.users.${cfg.user} = {
       isSystemUser = true;
