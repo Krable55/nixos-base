@@ -1,4 +1,9 @@
-backupScript = ''
+{ config, pkgs, lib, ... }:
+
+let
+  cfg = config.custom.backup;
+  includes = builtins.concatStringsSep " " (map (name: "--include='${name}'") cfg.includeDirs);
+  backupScript = ''
   #!/bin/bash
   set -eo pipefail  # NOTE: no -u
 
@@ -75,3 +80,65 @@ backupScript = ''
   promote_if_needed "$BCKP/$WEEKLYP" "$BCKP/$DAILYP" "$WEEK" "$WEEKLY"
   remove_old "$BCKP/$DAILYP" "$DAILY"
 '';
+
+
+in {
+  options.custom.backup = {
+    enable = lib.mkEnableOption "Enable rsync-based backup service";
+    srcDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib";
+      description = "Directory to back up from.";
+    };
+    includeDirs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Subdirectories to include under srcDir.";
+    };
+    targetDir = lib.mkOption {
+      type = lib.types.path;
+      description = "Target backup directory.";
+    };
+    interval = lib.mkOption {
+      type = lib.types.str;
+      default = "daily";
+      description = "Systemd timer OnCalendar interval.";
+    };
+    logDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/log";
+      description = "Directory where backup logs are written.";
+    };
+    retention = {
+      daily = lib.mkOption { type = lib.types.int; default = 3; };
+      weekly = lib.mkOption { type = lib.types.int; default = 2; };
+      monthly = lib.mkOption { type = lib.types.int; default = 3; };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ pkgs.rsync ];
+
+    systemd.tmpfiles.rules = [
+      "d ${cfg.logDir} 0755 root root -"
+    ];
+
+    systemd.services.rsync-backup = {
+      description = "Rsync Backup Job";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${scriptFile}";
+      };
+    };
+
+    systemd.timers.rsync-backup = {
+      description = "Run rsync backup periodically";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = cfg.interval;
+        Persistent = true;
+      };
+    };
+  };
+}
