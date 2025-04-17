@@ -148,7 +148,7 @@ in {
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "/etc/rsync-backup.sh";
+        ExecStart = "${config.environment.etc."rsync-backup.sh".source}";
       };
     };
 
