@@ -27,6 +27,7 @@
         self.nixosModules.colmena
         sops-nix.nixosModules.sops
         self.nixosModules.nfs
+        self.nixosModules.rsync
         self.nixosModules.default
       ];
       format = "proxmox";
@@ -41,6 +42,7 @@
         self.nixosModules.colmena
         self.nixosModules.nfs
         sops-nix.nixosModules.sops
+        self.nixosModules.rsync
         self.nixosModules.default
       ];
     };
@@ -52,6 +54,7 @@
       forgejo   = import ./modules/forgejo.nix;
       colmena = import ./modules/colmena.nix;
       nfs = import ./modules/nfs.nix;
+      rsync = import ./modules/rsync.nix;
     };
   };
 }

@@ -22,8 +22,6 @@ in {
       "d /mnt/media 0775 media media -"
     ];
 
-    # services.nfs.client.enable = true;
-
     services.sonarr = {
       enable = true;
       openFirewall = true;

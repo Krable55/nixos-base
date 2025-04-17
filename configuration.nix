@@ -40,10 +40,10 @@ in
     };
 
     # Enable Tailscale
-    services.tailscale = lib.mkIf hasAgeKey {
+    services.tailscale = {
       enable = true;
       useRoutingFeatures = "client";
-      authKeyFile = config.sops.secrets.tailscale-authkey.path;
+      authKeyFile = lib.mkIf hasAgeKey config.sops.secrets.tailscale-authkey.path;
     };
 
     # Set the time zone.
