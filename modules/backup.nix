@@ -3,7 +3,7 @@
 let
   cfg = config.custom.backup;
 
-  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile ./.bin/rsync.sh);
+  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath);
 
 in {
   options.custom.backup = {
@@ -11,8 +11,8 @@ in {
 
     scriptPath = lib.mkOption {
       type = lib.types.path;
-      default = ./.bin/rsync.sh;
-      description = "Path to the rsync backup script file (e.g. ./.bin/rsync.sh).";
+      default = ./modules/.bin/rsync.sh;
+      description = "Path to the rsync backup script file (e.g. ./modules/.bin/rsync.sh).";
     };
 
     interval = lib.mkOption {
@@ -55,6 +55,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         Environment = [
+          "HOME=/root"
           "SRC=${cfg.srcDir}"
           "BCKP=${cfg.targetDir}"
           "DAILY=${toString cfg.retention.daily}"
