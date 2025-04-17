@@ -1,5 +1,5 @@
 {
-  description = "Extended NixOS Config with Forgejo + Media";
+  description = "Extended NixOS Config with Forgejo + Colmena";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -13,7 +13,6 @@
     };
   };
 
-  custom.nfs.enable = true;
   outputs = { self, nixpkgs, base, sops-nix, ... }: {
     nixosConfigurations.nixos-builder = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
@@ -28,6 +27,8 @@
         ({ ... }: {
           custom.colmena.enable = true;
           custom.forgejo.enable = true;
+          
+          custom.nfs.enable = true;
           custom.nfs.mounts = {
             backups = {
               device = "192.168.50.154:/Backups";
@@ -41,7 +42,7 @@
             enable = true;
             srcDir = "/var/lib";
             includeDirs = [ "forgejo" ];
-            targetDir = "/mnt/backups/colmena-data";
+            targetDir = "/mnt/backups/management-data";
             interval = "daily";
             retention = {
               daily = 5;
