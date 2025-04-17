@@ -134,14 +134,14 @@ done
 
 # If the script is called with a parameter, that will be used as the archive name,
 # otherwise the current date and time will be used.
-if [ "$1" != "" ]; then
+if [ -n "${1:-}" ]; then
 	FOLDER="$MANUALP"
 	NAME="$1"
 else
 	FOLDER="$DAILYP"
 	TODAY=$(find "$BCKP/$FOLDER" -maxdepth 1 -mindepth 1 -type d -ctime -1 -printf "a" | wc -c)
 	if [ $TODAY -gt 0 ]; then
-		echo "Backup has been performed in the last 24 hours. Exiting..."
+		echo "Backup already performed in the last 24 hours. Exiting..."
 		exit 0
 	fi
 	NAME=$(date +%Y-%m-%d_%H-%M)
@@ -151,7 +151,7 @@ LOG="$BCKP/$LOGSP/$NAME.log"
 
 # If the script is called with a second parameter, that will be the directory to
 # compare to, otherwise the defalut will be used.
-if [ "$2" != "" ]; then
+if [ -n "${2:-}" ]; then
 	LAST="$2"
 else
 	LAST="last"
