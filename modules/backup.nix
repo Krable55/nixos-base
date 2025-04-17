@@ -3,8 +3,13 @@
 let
   cfg = config.custom.backup;
 
-  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath);
-
+  scriptFile = pkgs.symlinkJoin {
+    name = "rsync-backup-wrapper";
+    paths = [
+      (pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath))
+      pkgs.rsync
+    ];
+  };
 in {
   options.custom.backup = {
     enable = lib.mkEnableOption "Enable rsync-based backup service";
