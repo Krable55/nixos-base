@@ -3,13 +3,7 @@
 let
   cfg = config.custom.backup;
 
-  scriptFile = pkgs.symlinkJoin {
-    name = "rsync-backup-wrapper";
-    paths = [
-      (pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath))
-      pkgs.rsync
-    ];
-  };
+  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath);
 
 in {
   options.custom.backup = {
@@ -53,7 +47,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ scriptFile pkgs.rsync ];
+    environment.systemPackages = [ scriptFile ];
 
     systemd.services.rsync-backup = {
       description = "Rsync Backup Job";
@@ -61,13 +55,13 @@ in {
       serviceConfig = {
         Type = "oneshot";
         Environment = [
+          "HOME=/root"
           "SRC=${cfg.srcDir}"
           "BCKP=${cfg.targetDir}"
           "DAILY=${toString cfg.retention.daily}"
           "WEEKLY=${toString cfg.retention.weekly}"
           "MONTHLY=${toString cfg.retention.monthly}"
           ''INCLUDE=${lib.concatStringsSep " " cfg.includePaths}''
-          "HOME=/root" # ensures $HOME is set in the environment for bash
         ];
         ExecStart = "${scriptFile}/bin/rsync-backup";
       };
