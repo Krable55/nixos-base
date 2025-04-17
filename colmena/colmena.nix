@@ -40,7 +40,15 @@
 
           custom.backup = {
             enable = true;
-            interval = "daily"; # or "weekly", or "Mon *-*-* 01:00:00"
+            scriptPath = ./scripts/rsync.sh;
+            srcDir = "/";                        # optional
+            targetDir = "/mnt/backups";         # optional
+            interval = "daily";                 # optional
+            retention = {
+              daily = 5;
+              weekly = 3;
+              monthly = 6;
+            };
           };
         })
       ];

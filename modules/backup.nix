@@ -3,16 +3,39 @@
 let
   cfg = config.custom.backup;
 
-  # Reference to your script in the repo
-  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile ./rsync.sh);
+  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath);
 
 in {
   options.custom.backup = {
     enable = lib.mkEnableOption "Enable rsync-based backup service";
+
+    scriptPath = lib.mkOption {
+      type = lib.types.path;
+      description = "Path to the rsync backup script file (e.g. ./rsync.sh).";
+    };
+
     interval = lib.mkOption {
       type = lib.types.str;
       default = "daily";
       description = "Systemd OnCalendar value (e.g. daily, weekly, or specific time).";
+    };
+
+    srcDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/";
+      description = "Source directory to back up.";
+    };
+
+    targetDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/media/data/backup";
+      description = "Target directory where backups are stored.";
+    };
+
+    retention = {
+      daily = lib.mkOption { type = lib.types.int; default = 3; description = "Number of daily backups to keep."; };
+      weekly = lib.mkOption { type = lib.types.int; default = 2; description = "Number of weekly backups to keep."; };
+      monthly = lib.mkOption { type = lib.types.int; default = 3; description = "Number of monthly backups to keep."; };
     };
   };
 
@@ -24,6 +47,13 @@ in {
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
+        Environment = [
+          "SRC=${cfg.srcDir}"
+          "BCKP=${cfg.targetDir}"
+          "DAILY=${toString cfg.retention.daily}"
+          "WEEKLY=${toString cfg.retention.weekly}"
+          "MONTHLY=${toString cfg.retention.monthly}"
+        ];
         ExecStart = "${scriptFile}/bin/rsync-backup";
       };
     };
