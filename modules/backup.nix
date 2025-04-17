@@ -3,16 +3,14 @@
 let
   cfg = config.custom.backup;
 
-  scriptFile = lib.mkIf (cfg.scriptPath != null) (
-    pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath)
-  );
+  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath);
 
 in {
   options.custom.backup = {
     enable = lib.mkEnableOption "Enable rsync-based backup service";
 
     scriptPath = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
+      type = lib.types.path;
       default = ./rsync.sh;
       description = "Path to the rsync backup script file (e.g. ./rsync.sh).";
     };
@@ -42,7 +40,7 @@ in {
     };
   };
 
-  config = lib.mkIf (cfg.enable && cfg.scriptPath != null) {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = [ scriptFile ];
 
     systemd.services.rsync-backup = {
