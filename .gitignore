@@ -1,2 +1,2 @@
-secrets/age.key
-secrets/secrets.yaml.dec
+*/secrets/age.key
+*/secrets/*.dec*
