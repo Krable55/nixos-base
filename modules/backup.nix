@@ -3,7 +3,7 @@
 let
   cfg = config.custom.backup;
 
-  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath);
+  scriptFile = pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile ./modules/.bin/rsync.sh);
 
 in {
   options.custom.backup = {
@@ -11,8 +11,8 @@ in {
 
     scriptPath = lib.mkOption {
       type = lib.types.path;
-      default = ./rsync.sh;
-      description = "Path to the rsync backup script file (e.g. ./rsync.sh).";
+      default = ./modules/.bin/rsync.sh;
+      description = "Path to the rsync backup script file (e.g. ./modules/.bin/rsync.sh).";
     };
 
     interval = lib.mkOption {
@@ -31,6 +31,12 @@ in {
       type = lib.types.path;
       default = "/media/data/backup";
       description = "Target directory where backups are stored.";
+    };
+
+    includePaths = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "List of relative paths to include in the rsync backup (passed as --include).";
     };
 
     retention = {
@@ -54,6 +60,7 @@ in {
           "DAILY=${toString cfg.retention.daily}"
           "WEEKLY=${toString cfg.retention.weekly}"
           "MONTHLY=${toString cfg.retention.monthly}"
+          ''INCLUDE=${lib.concatStringsSep " " cfg.includePaths}''
         ];
         ExecStart = "${scriptFile}/bin/rsync-backup";
       };

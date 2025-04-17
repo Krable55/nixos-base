@@ -45,7 +45,7 @@
           custom.backup = {
             enable = true;
             srcDir = "/var/lib";
-            includeDirs = [ "sonarr" "radarr" "readarr" "lidarr" "prowlarr" "plexpy" ];
+            includePaths = [ "sonarr" "radarr" "readarr" "lidarr" "prowlarr" "plexpy" ];
             targetDir = "/mnt/backups/media-center-data";
             interval = "daily";
             retention = {
@@ -54,9 +54,6 @@
               monthly = 6;
             };
           };
-
-
-
         })
       ];
     };
