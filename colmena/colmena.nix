@@ -40,15 +40,7 @@
 
           custom.backup = {
             enable = true;
-            srcDir = "/var/lib";
-            includeDirs = [ "forgejo" ];
-            targetDir = "/mnt/backups/management-data";
-            interval = "daily";
-            retention = {
-              daily = 5;
-              weekly = 2;
-              monthly = 6;
-            };
+            interval = "daily"; # or "weekly", or "Mon *-*-* 01:00:00"
           };
         })
       ];
