@@ -117,11 +117,12 @@ LOGSP="logs"
 # we source the files in the user's config directory to get the custom setup.
 # the user's custom variables should be set up in the file "vars" in
 # their $XDG_CONFIG_HOME/nmbckp directory, or if that is not specified, in their
-# $HOME/.config/nmbckp directory.
-if [ ! -z $XDG_CONFIG_HOME ]; then
-	[ -f "$XDG_CONFIG_HOME/nmbckp/vars" ] && . "$XDG_CONFIG_HOME/nmbckp/vars"
+# Load user/system config files if present
+[ -f "/etc/nmbckp/vars" ] && . "/etc/nmbckp/vars"
+if [ -n "${XDG_CONFIG_HOME:-}" ]; then
+  [ -f "$XDG_CONFIG_HOME/nmbckp/vars" ] && . "$XDG_CONFIG_HOME/nmbckp/vars"
 else
-	[ -f "$HOME/.config/nmbckp/vars" ] && . "$HOME/.config/nmbckp/vars" 
+  [ -f "$HOME/.config/nmbckp/vars" ] && . "$HOME/.config/nmbckp/vars"
 fi
 
 # we check if the required folders exist, if not, we create them
