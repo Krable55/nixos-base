@@ -34,7 +34,6 @@
 
   users.groups.forgejo = { };
 
-  # ✅ Correctly placed top-level user declaration
   users.users.forgejo-runner = {
     isSystemUser = true;
     group = "forgejo"; # or "nogroup"

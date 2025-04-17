@@ -21,7 +21,7 @@
         sops-nix.nixosModules.sops
         base.nixosModules.default
         base.nixosModules.media
-        base.nixosModules.rsync
+        base.nixosModules.backup
         base.nixosModules.nfs
         ({ ... }: {
           custom.media.enable = true;
@@ -42,14 +42,20 @@
             };
           };
 
-          custom.rsync.enable = true;
-          custom.rsync.sourceDirs = {
-              "sonarr.service" = /var/lib/sonarr;
-              "radarr.service" = /var/lib/radarr;
-              "readarr.service" = /var/lib/readarr;
-              "lidarr.service" = /var/lib/lidarr;
-              "prowlarr.service" = /var/lib/prowlarr;
+          custom.backup = {
+            enable = true;
+            srcDir = "/var/lib";
+            includeDirs = [ "sonarr" "radarr" "readarr" "lidarr" "prowlarr" ];
+            targetDir = "/mnt/backups/media-center-data";
+            interval = "daily";
+            retention = {
+              daily = 5;
+              weekly = 3;
+              monthly = 6;
+            };
           };
+
+
 
         })
       ];
