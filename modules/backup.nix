@@ -41,7 +41,7 @@ let
 
     LOG="$BCKP/$LOGSP/$NAME.log"
 
-    if [ -n ''${2:-}" ]; then
+    if [ -n ''${2:-} ]; then
       LAST="$2"
     else
       LAST="last"
