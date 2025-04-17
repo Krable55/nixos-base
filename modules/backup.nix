@@ -96,7 +96,7 @@ let
     move_and_remove "$BCKP/$WEEKLYP" "$BCKP/$DAILYP" $WEEK $WEEKLY
     remove "$BCKP/$DAILYP" $DAILY
   '';
-
+  scriptFile = pkgs.writeShellScript "rsync-backup" backupScript;
 in {
   options.custom.backup = {
     enable = lib.mkEnableOption "Enable rsync-based backup service";
@@ -134,11 +134,6 @@ in {
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.rsync ];
 
-    environment.etc."rsync-backup.sh" = {
-      text = backupScript;
-      mode = "0755";
-    };
-
     systemd.tmpfiles.rules = [
       "d ${cfg.logDir} 0755 root root -"
     ];
@@ -148,7 +143,7 @@ in {
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${config.environment.etc."rsync-backup.sh".source}";
+        ExecStart = "${scriptFile}";
       };
     };
 
