@@ -80,7 +80,7 @@ let
   promote_if_needed "$BCKP/$WEEKLYP" "$BCKP/$DAILYP" "$WEEK" "$WEEKLY"
   remove_old "$BCKP/$DAILYP" "$DAILY"
 '';
-
+scriptFile = pkgs.writeShellScript "rsync-backup" backupScript;
 
 in {
   options.custom.backup = {
