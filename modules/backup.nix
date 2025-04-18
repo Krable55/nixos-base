@@ -64,6 +64,7 @@ in {
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
+        SuccessExitStatus = [ 0 1 ];
         Environment = [
           "HOME=/root"
           "SRC=${cfg.srcDir}"

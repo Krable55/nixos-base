@@ -112,6 +112,7 @@ if [ "${#INCLUDE_PATHS[@]}" -gt 0 ]; then
     INCLUDE_FLAGS+=( "--include=/$path/***" )
   done
   INCLUDE_FLAGS+=( "--include=*/" "--exclude=*" )
+  echo "Parsed INCLUDE paths: ${INCLUDE_PATHS[*]}" >> "$LOG"
 else
   echo "Warning: No INCLUDE paths specified. Backup may be empty." >> "$LOG"
 fi
