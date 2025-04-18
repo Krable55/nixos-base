@@ -60,6 +60,7 @@ in {
 
     systemd.services.rsync-backup = {
       description = "Rsync Backup Job";
+      User = "root";
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
