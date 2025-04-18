@@ -3,13 +3,17 @@
 let
   cfg = config.custom.backup;
 
-  scriptFile = pkgs.symlinkJoin {
+  scriptFile = pkgs.buildEnv {
     name = "rsync-backup-wrapper";
-    paths = [
-      (pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath))
-      pkgs.rsync
-    ];
+    paths = [ (pkgs.writeShellScriptBin "rsync-backup" (builtins.readFile cfg.scriptPath)) ];
+    pathsToLink = [ "/bin" ];
+    buildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/rsync-backup \
+        --prefix PATH : ${lib.makeBinPath [ pkgs.rsync pkgs.coreutils pkgs.findutils pkgs.gnused ]}
+    '';
   };
+
 in {
   options.custom.backup = {
     enable = lib.mkEnableOption "Enable rsync-based backup service";
