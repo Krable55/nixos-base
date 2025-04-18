@@ -106,10 +106,14 @@ OPTS="-aAXiH --numeric-ids"
 
 # Build include/exclude rules
 INCLUDE_FLAGS=()
-for path in "${INCLUDE_PATHS[@]}"; do
-  INCLUDE_FLAGS+=( "--include=/$path/***" )
-done
-INCLUDE_FLAGS+=( "--include=*/" "--exclude=*" )
+if [ "${#INCLUDE[@]}" -gt 0 ]; then
+  for path in "${INCLUDE[@]}"; do
+    INCLUDE_FLAGS+=( "--include=/$path/***" )
+  done
+  INCLUDE_FLAGS+=( "--include=*/" "--exclude=*" )
+else
+  echo "Warning: No INCLUDE paths specified. Backup will likely be empty." >> "$LOG"
+fi
 
 # Run rsync
 echo "Running rsync: rsync $OPTS ${INCLUDE_FLAGS[*]} $LINK $SRC/ $BCKP/$FOLDER/$NAME/" >> "$LOG"
