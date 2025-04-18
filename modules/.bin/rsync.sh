@@ -44,8 +44,9 @@ MONTHLY="${MONTHLY:-3}"
 DRY_RUN="${DRY_RUN:-false}"
 INCLUDE="${INCLUDE:-}"
 
-# Parse INCLUDE paths into array
-IFS=' ' read -r -a INCLUDE_PATHS <<< "$INCLUDE"
+# Parse INCLUDE from environment safely
+INCLUDE_RAW="${INCLUDE:-}"
+IFS=' ' read -r -a INCLUDE_PATHS <<< "$INCLUDE_RAW"
 
 # Period definitions
 WEEK=7
@@ -106,14 +107,15 @@ OPTS="-aAXiH --numeric-ids"
 
 # Build include/exclude rules
 INCLUDE_FLAGS=()
-if [ "${#INCLUDE[@]}" -gt 0 ]; then
-  for path in "${INCLUDE[@]}"; do
+if [ "${#INCLUDE_PATHS[@]}" -gt 0 ]; then
+  for path in "${INCLUDE_PATHS[@]}"; do
     INCLUDE_FLAGS+=( "--include=/$path/***" )
   done
   INCLUDE_FLAGS+=( "--include=*/" "--exclude=*" )
 else
-  echo "Warning: No INCLUDE paths specified. Backup will likely be empty." >> "$LOG"
+  echo "Warning: No INCLUDE paths specified. Backup may be empty." >> "$LOG"
 fi
+
 
 # Run rsync
 echo "Running rsync: rsync $OPTS ${INCLUDE_FLAGS[*]} $LINK $SRC/ $BCKP/$FOLDER/$NAME/" >> "$LOG"
