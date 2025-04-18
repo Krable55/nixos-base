@@ -185,14 +185,21 @@ else
 			# current directory.
 fi
 
-INCLUDES=( "${INCLUDE[@]/#/--include=}" )
+# Shell array populated from $INCLUDE (space-separated)
+IFS=' ' read -r -a INCLUDE_PATHS <<< "$INCLUDE"
 
-# Add final catch-all exclude to skip everything else
-INCLUDES+=( "--include=*/" "--exclude=*" )
+# Expand to rsync flags
+INCLUDE_FLAGS=()
+for path in "${INCLUDE_PATHS[@]}"; do
+  INCLUDE_FLAGS+=( "--include=/$path/***" )
+done
+
+# Add directory includes and final exclude
+INCLUDE_FLAGS+=( "--include=*/" "--exclude=*" )
 
 # Run rsync
-echo "Running: rsync $OPTS ${INCLUDES[*]} $LINK $SRC $BCKP/$FOLDER/$NAME/" >> "$LOG"
-rsync $OPTS "${INCLUDES[@]}" $LINK "$SRC" "$BCKP/$FOLDER/$NAME/" >> "$LOG" || echo "rsync failed" >> "$LOG"
+echo "Running: rsync $OPTS ${INCLUDE_FLAGS[@]} $LINK $SRC $BCKP/$FOLDER/$NAME/" >> "$LOG"
+rsync $OPTS "${INCLUDE_FLAGS[@]}" $LINK "$SRC/" "$BCKP/$FOLDER/$NAME/" >> "$LOG"
 
 # removes the link to the last one and creates a link to the new one
 if [ -L "$BCKP/$LAST" ]; then
