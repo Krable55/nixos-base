@@ -102,7 +102,7 @@ else
 fi
 
 # rsync options
-OPTS="-aAXiH --numeric-ids"
+OPTS="-aAXiH --numeric-ids --prune-empty-dirs"
 [[ "$DRY_RUN" == "true" ]] && OPTS="$OPTS --dry-run"
 
 # Build include/exclude rules

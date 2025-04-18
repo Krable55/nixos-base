@@ -20,3 +20,7 @@ sops --encrypt --age "$(cat colmena/secrets/age.pub)" \
   colmena/secrets/secrets.dec.yaml
 ```
 
+### Update flake and rebuild (from VM)
+1. `sudo nix flake update`
+2. `sudo nixos-rebuild switch --flake .#nixos-builder`
+
