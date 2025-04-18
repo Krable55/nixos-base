@@ -153,3 +153,20 @@ if [ -n "${LATESTDIR:-}" ]; then
   ln -sf "$LATESTDIR" "$BCKP/last"
   echo "Symlink to latest backup: $LATESTDIR" >> "$LOG"
 fi
+
+# === Archive all but the latest ===
+BACKUP_DIR="$BCKP/$FOLDER"
+LAST_REALPATH=$(readlink -f "$BCKP/last")
+
+echo "Archiving old backups in $BACKUP_DIR (excluding $LAST_REALPATH)" >> "$LOG"
+
+find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | while read -r dir; do
+  dir_real=$(readlink -f "$dir")
+  if [[ "$dir_real" != "$LAST_REALPATH" ]]; then
+    tarball="$dir.tar.gz"
+    if [ -d "$dir" ] && [ ! -f "$dir.tar.gz" ]; then
+     echo "Compressing $dir → $dir.tar.gz" >> "$LOG"
+     tar -czf "$dir.tar.gz" -C "$(dirname "$dir")" "$(basename "$dir")" && rm -rf "$dir"
+    fi
+  fi
+done
