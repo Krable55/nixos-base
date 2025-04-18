@@ -70,7 +70,8 @@ in {
           "DAILY=${toString cfg.retention.daily}"
           "WEEKLY=${toString cfg.retention.weekly}"
           "MONTHLY=${toString cfg.retention.monthly}"
-          ''INCLUDE=${lib.concatStringsSep " " cfg.includePaths}''
+          "INCLUDE=\"${lib.concatStringsSep " " cfg.includePaths}\""
+
         ];
         ExecStart = "${scriptFile}/bin/rsync-backup";
       };
