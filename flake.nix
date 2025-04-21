@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
 
+    colmena = {
+      url   = "github:zhaofengli/colmena";
+      flake = true;
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       flake = true;
@@ -15,8 +20,18 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixos-generators, sops-nix, ... }@inputs: let
-    system = "x86_64-linux";
+  outputs = { self, nixpkgs, nixos-generators, sops-nix, colmena, ... }@inputs: let
+  inherit (self) outputs;
+  system = "x86_64-linux";
+
+  nixosModules = {
+    default  = import ./configuration.nix;
+    media    = import ./modules/media.nix;
+    forgejo  = import ./modules/forgejo.nix;
+    colmena  = import ./modules/colmena.nix;
+    nfs      = import ./modules/nfs.nix;
+    backup   = import ./modules/backup.nix;
+  };
   in {
     # For VM image building (e.g., `nix build`)
     packages.${system}.default = nixos-generators.nixosGenerate {
@@ -33,6 +48,8 @@
       format = "proxmox";
     };
 
+    overlays = import ./overlays {inherit inputs;};
+
     # System config for use with `nixos-rebuild`
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
@@ -47,14 +64,46 @@
       ];
     };
 
-    # Export reusable modules
-    nixosModules = {
-      default   = import ./configuration.nix;
-      media   = import ./modules/media.nix;
-      forgejo   = import ./modules/forgejo.nix;
-      colmena = import ./modules/colmena.nix;
-      nfs = import ./modules/nfs.nix;
-      backup = import ./modules/backup.nix;
+   colmena = {
+      meta = {
+        nixpkgs = import nixpkgs {
+          system = "x86_64-linux";
+        };
+        specialArgs = {inherit inputs outputs;};
+      };
+
+      # “defaults” get merged into every node’s config
+      defaults = import ./base.nix;
+
+      media-center = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.64";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags = [ "media-center" "infra-media" ];
+        };
+        imports = [ ./hosts/media-center.nix ];
+      };
+
+      builder = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.243";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags = [ "builder" "infra-builder" ];
+        };
+        imports = [ ./hosts/builder.nix ];
+      };
+
+      networking = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.183";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags = [ "network" "networking" "infra-networking" ];
+        };
+        imports = [ ./hosts/networking.nix ];
+      };
     };
   };
 }

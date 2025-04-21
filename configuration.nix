@@ -28,22 +28,11 @@ in
 
     networking.networkmanager.enable = true;
 
-    # Setup sops-nix for secret management
-    sops = lib.mkIf hasAgeKey {
-      defaultSopsFile = ./secrets/secrets.yaml;
-      age.keyFile = ./secrets/age.key;
-      secrets.tailscale-authkey = {
-        owner = "root";
-        group = "root";
-        path = "/var/lib/tailscale/authkey";
-      };
-    };
-
     # Enable Tailscale
     services.tailscale = {
       enable = true;
       useRoutingFeatures = "client";
-      authKeyFile = lib.mkIf hasAgeKey config.sops.secrets.tailscale-authkey.path;
+      authKeyFile = lib.mkIf config.sops.secrets.tailscale-authkey.path;
     };
 
     # Set the time zone.

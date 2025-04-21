@@ -1,31 +1,27 @@
 { config, pkgs, lib, modulesPath, inputs, ... }:
 
 {
-  # any global “profiles” you want
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
-    ../modules/media.nix
+    ../modules/colmena.nix
+    ../modules/forgejo.nix
     ../modules/nfs.nix
     ../modules/backup.nix
   ];
 
-  # exactly what you had inline:
-  networking.hostName = "media-center";
-  custom.media.enable  = true;
+  # Modules for building and managing homelab infra
+  custom.colmena.enable = true;
+  custom.forgejo.enable = true;
+
+  networking.hostName = "builder";
 
   custom.nfs = {
     enable = true;
     mounts = {
-      media = {
-        device = "192.168.50.154:/MediaCenter";
-        owner  = "media";
-        group  = "media";
-        mode   = "0775";
-      };
       backups = {
         device = "192.168.50.154:/Backups";
-        owner  = "media";
-        group  = "media";
+        owner  = "forgejo";
+        group  = "forgejo";
         mode   = "0775";
       };
     };
@@ -34,8 +30,8 @@
   custom.backup = {
     enable       = true;
     srcDir       = "/var/lib";
-    includePaths = [ "sonarr" "radarr" "readarr" "lidarr" "prowlarr" "plexpy" ];
-    targetDir    = "/mnt/backups/media-center-data";
+    includePaths = [ "forgejo" "forgejo-runner" ];
+    targetDir    = "/mnt/backups/mnt/backups/management-data";
     interval     = "daily";
     retention = {
       daily   = 5;

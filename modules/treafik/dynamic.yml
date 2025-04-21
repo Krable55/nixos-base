@@ -1,0 +1,549 @@
+certificatesResolvers:
+  leresolver:
+    acme:
+      dnsChallenge:
+        provider: cloudflare
+      email: kyle.rable@outlook.com
+      storage: /acme.json
+http:
+  middlewares:
+    auth-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        frameDeny: true
+        sslForceHost: true
+        sslHost: auth.goobtube.tv
+        sslRedirect: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 315360000
+    header-forward:
+      headers:
+        customRequestHeaders:
+          Set-Cookie: Secure; SameSite=None
+          X-Forwarded-Host: auth.goobtube.tv
+          X-Forwarded-Proto: https
+    websocket:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          Access-Control-Allow-Origin: "*"
+        allowWebsocket: true
+    oauth-auth-redirect:
+      forwardAuth:
+        addAuthCookiesToResponse:
+          - Session-Cookie
+          - State-Cookie
+        address: http://oauth2-proxy:4180
+        authResponseHeaders:
+          - X-Auth-Request-Access-Token
+          - X-Forwarded-Uri
+          - Authorization
+        trustForwardHeader: true
+    # Middleware for handling errors and redirecting to OAuth2 login
+    oauth-errors:
+      errors:
+        query: /oauth2/start?rd={scheme}://{host}{uri}
+        service: oauth-backend
+        status:
+          - 401-403
+    obsidiancors:
+      headers:
+        accessControlAllowCredentials: true
+        accessControlAllowHeaders:
+          - accept
+          - authorization
+          - content-type
+          - origin
+          - referer
+        accessControlAllowMethods:
+          - GET
+          - OPTIONS
+          - PUT
+          - POST
+          - HEAD
+          - DELETE
+        accessControlAllowOriginList:
+          - app://obsidian.md
+          - capacitor://localhost
+          - http://localhost
+        accessControlMaxAge: 3600
+        addVaryHeader: true
+    redirect-to-https:
+      redirectScheme:
+        permanent: true
+        port: 443
+        scheme: https
+      
+    zitadel:
+      headers:
+        allowedHosts:
+          - auth.goobtube.tv
+        customRequestHeaders:
+          authority: auth.goobtube.tv
+        isDevelopment: false
+    zitadel-auth:
+      forwardAuth:
+        address: https://auth.goobtube.tv/auth
+        authResponseHeaders:
+          - X-Auth-Request-User
+          - X-Auth-Request-Email
+          - X-Auth-Request-Access-Token
+          - X-Auth-Request-Groups
+          - Authorization
+        trustForwardHeader: true
+  routers:
+    audiobooks:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`audiobooks.goobtube.tv`)
+      service: audiobooks-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    # auth:
+    #   priority: 1
+    #   rule: >-  
+    #     Host(`auth.goobtube.tv`) || Host(`sab.goobtube.tv`) ||  Host(`git.goobtube.tv`) || || Host(`mealie.goobtube.tv`) || Host(`obsidian.goobtube.tv`) || Host(`kavita.goobtube.tv`) || Host(`immich.goobtube.tv`) || Host(`podgrab.goobtube.tv`) || Host(`code.goobtube.tv`) || Host(`audiobooks.goobtube.tv`) || Host(`prowlarr.goobtube.tv`) || Host(`lidarr.goobtube.tv`) || Host(`tautulli.goobtube.tv`) || Host(`uptime.goobtube.tv`) || Host(`portainer.goobtube.tv`) || Host(`traefik.goobtube.tv`) || Host(`radarr.goobtube.tv`) || Host(`readarr.goobtube.tv`) || Host(`sonarr.goobtube.tv`) || Host(`whoami.goobtube.tv`) &&
+      # service: authentik
+    code:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`code.goobtube.tv`)  && PathPrefix(`/`)
+      service: code-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    deluge:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`deluge.goobtube.tv`)  && PathPrefix(`/`)
+      service: deluge-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    git:
+      # middlewares:
+      #   - oauth-errors
+      #   - oauth-auth-redirect
+      rule: Host(`git.goobtube.tv`)  && PathPrefix(`/`)
+      service: gitea-backend
+      tls: true
+        # certResolver: leresolver
+        # domains:
+        #   - main: goobtube.tv
+        #     sans:
+        #       - '*.goobtube.tv'
+    immich:
+      rule: Host(`immich.goobtube.tv`)
+      service: immich-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    kavita:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`kavita.goobtube.tv`) && PathPrefix(`/`)
+      service: kavita-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    library:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`library.goobtube.tv`) && PathPrefix(`/`)
+      service: library-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    lidarr:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`lidarr.goobtube.tv`) && PathPrefix(`/`)
+      service: lidarr-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    mealie:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`mealie.goobtube.tv`) && PathPrefix(`/`)
+      service: mealie-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    n8n:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`n8n.goobtube.tv`) && PathPrefix(`/`)
+      service: n8n-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    oauth2-proxy-route:
+      middlewares:
+        - auth-headers
+      rule: Host(`oauth.goobtube.tv`) && PathPrefix(`/`)
+      service: oauth-backend
+      tls:
+        certResolver: default
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    # nas:
+    #   middlewares:
+    #     - oauth-errors
+    #     - oauth-auth-redirect
+    #   rule: Host(`nas.goobtube.tv`) && PathPrefix(`/`)
+    #   service: nas-backend
+    #   tls:
+    #     certResolver: leresolver
+    #     domains:
+    #       - main: goobtube.tv
+    #         sans:
+    #           - '*.goobtube.tv'
+    obsidian-livesync:
+      middlewares:
+        - obsidiancors
+      rule: Host(`obsidian.goobtube.tv`) && PathPrefix(`/`)
+      service: obsidian-livesync-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    overseerr:
+      rule: Host(`watch.goobtube.tv`) && PathPrefix(`/`)
+      service: overseerr-backend
+      tls: true
+      
+    plex:
+      rule: Host(`plex.goobtube.tv`) && PathPrefix(`/`)
+      service: plex-backend
+      tls:
+        certResolver: default
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    podgrab:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`podgrab.goobtube.tv`) && PathPrefix(`/`)
+      service: podgrab-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    portainer:
+      rule: Host(`portainer.goobtube.tv`)
+      service: portainer-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    prowlarr:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`prowlarr.goobtube.tv`) && PathPrefix(`/`)
+      service: prowlarr-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    radarr:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`radarr.goobtube.tv`) && PathPrefix(`/`)
+      service: radarr-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    readarr:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`readarr.goobtube.tv`) && PathPrefix(`/`)
+      service: readarr-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    sab:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`sab.goobtube.tv`) && PathPrefix(`/`)
+      service: sab-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    # catchall:
+    #   rule: "PathPrefix(`/`)"
+    #   entryPoints:
+    #     - web
+    #   middlewares:
+    #     - redirect-to-https
+    #### Oauth routes
+    services-oauth2-route:
+      middlewares:
+        - auth-headers
+      rule: Host(`oauth2-proxy.oauth2-proxy.localhost`)
+      service: oauth-backend
+      tls:
+        certResolver: default
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    sonarr:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`sonarr.goobtube.tv`) && PathPrefix(`/`)
+      service: sonarr-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    tautulli:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`tautulli.goobtube.tv`) && PathPrefix(`/`)
+      service: tautulli-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    traefik:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`traefik.goobtube.tv`)
+      service: traefik-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    uptime:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`uptime.goobtube.tv`) && PathPrefix(`/`)
+      service: uptime-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    whoami:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`whoami.goobtube.tv`)
+      service: whoami-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+    zitadel:
+      middlewares:
+        - header-forward
+      rule: Host(`auth.goobtube.tv`) && PathPrefix(`/`)
+      service: zitadel-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: auth.goobtube.tv
+            sans:
+              - '*.goobtube.tv'
+  serversTransports:
+    zitadel:
+      insecureSkipVerify: false
+  services:
+    audiobooks-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:13378
+    # authentik:
+    #   loadBalancer:
+    #     servers:
+    #       - url: http://192.168.50.154:9080/outpost.goauthentik.io
+    code-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8449
+    deluge-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8112
+    gitea-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:159
+    immich-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:2283
+    kavita-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:5000
+    library-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:5299
+    lidarr-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8686
+    n8n-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:5678
+    # nas-backend:
+    #   loadBalancer:
+    #     servers:
+    #       - url: http://192.168.50.154:8080
+    mealie-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:9925
+    oauth-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:4180
+    obsidian-livesync-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:5984
+    overseerr-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:5055
+    plex-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:32400
+    podgrab-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8180
+    portainer-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:9000
+    prowlarr-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:9696
+    radarr-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:7878
+    readarr-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8787
+    sab-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8888
+    sonarr-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8989
+    tautulli-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8181
+    traefik-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:8080
+    uptime-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:3027
+    whoami-backend:
+      loadBalancer:
+        servers:
+          - url: http://192.168.50.154:80
+    zitadel-backend:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: h2c://192.168.50.154:9081
+        serversTransport: zitadel
+tls:
+  stores:
+    default:
+      # generates self-signed certificates
+      defaultCertificate: null

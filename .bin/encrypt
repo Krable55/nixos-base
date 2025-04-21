@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KEY="colmena/secrets/age.key"
+KEY="secrets/age.key"
 PUB="$(grep -v '^#' "$KEY" | age-keygen -y)"
 
 sops --encrypt \
   --age "$PUB" \
   --input-type yaml \
-  --output colmena/secrets/secrets.yaml \
-  colmena/secrets/secrets.dec.yaml
+  --output secrets/secrets.yaml \
+  secrets/secrets.dec.yaml
 
 echo "✅ Re-encrypted secrets.yaml using:"
 echo "$PUB"
