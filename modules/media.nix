@@ -8,6 +8,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    nixpkgs.config.allowUnfree = true; # required for plex
     users.groups.media.members = [
       "kyle"
       "sonarr"
@@ -16,6 +17,7 @@ in {
       "readarr"
       "prowlarr"
       "tautulli"
+      "plex"
     ];
 
     systemd.tmpfiles.rules = [
@@ -51,10 +53,17 @@ in {
       openFirewall = true;
     };
 
+    services.plex = {
+      enable = true;
+      openFirewall = true;
+      group="media";
+    };
+
     services.tautulli = {
       enable = true;
       openFirewall = true;
       group = "media";
+      user = "plex";
     };
 
     boot.supportedFilesystems = [ "nfs" ];
@@ -83,12 +92,19 @@ in {
         TZ = "America/Los_Angeles";
       };
       volumes = [
-        "/mnt/media/apps/overseer:/config:rw"
+        "/var/lib/overseer:/config:rw" # You'll have to premake this directory
       ];
     };
 
     networking.firewall.allowedTCPPorts = [
-      5055 8989 7878 8686 8787 8181 9696
+      5055 # Overseerr 
+      8989 # Sonarr
+      7878 # Radarr
+      8686 # Lidarr
+      8787 # Readarr
+      8181 
+      9696 # Prowlarr
+      32400 # Plex
     ];
   };
 }

@@ -1,28 +1,33 @@
 { config, pkgs, lib, ... }:
 let
-  cfg = config.custom.forgejo;
+  cfg = config.custom.forgejo-client;
+  user = "kyle";  # Specify the username
+  sshKeyPath = "/home/${user}/.ssh/id_ed25519.pub";
 in {
-  options.custom.forgejo = {
+  options.custom.forgejo-client = {
     enable = lib.mkEnableOption "Enable Forgejo Git client configuration";
 
     host = lib.mkOption {
       type        = lib.types.str;
+      default     = "192.168.50.243";
       description = "The Forgejo host (e.g., git.example.com)";
     };
 
     user = lib.mkOption {
       type        = lib.types.str;
-      default     = "git";
+      default     = user;
       description = "SSH user for Git access (usually 'git')";
     };
 
     sshKeyFile = lib.mkOption {
       type        = lib.types.path;
+      default     = sshKeyPath;
       description = "Path to the private SSH key for accessing Forgejo";
     };
 
     hostKey = lib.mkOption {
       type        = lib.types.str;
+      default     = "${cfg.host} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKGBOr+16aLDiNF5sRQmTZ9AsHmnE9tVF1k8Qul6w3ho";
       description = "The Forgejo server's SSH host key in known_hosts format";
     };
   };
@@ -38,7 +43,7 @@ in {
 
     # Configure global SSH config for Forgejo
     environment.etc."ssh/ssh_config.d/forgejo.conf" = {
-      text = lib.toString ''
+      text = ''
           Host ${cfg.host}
           User ${cfg.user}
           IdentityFile /etc/ssh/forgejo_id_rsa

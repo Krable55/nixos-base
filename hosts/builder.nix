@@ -3,6 +3,7 @@
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
+    ../modules/dashboards/dashboards.nix
     ../modules/colmena.nix
     ../modules/forgejo.nix
     ../modules/nfs.nix
@@ -26,6 +27,10 @@
       };
     };
   };
+  
+  custom.dashboards = {
+    enable       = true;
+  };
 
   custom.backup = {
     enable       = true;
@@ -38,5 +43,15 @@
       weekly  = 3;
       monthly = 6;
     };
+  };
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 
+      # 22 # SSH
+      # 80 
+      # 443 
+      8080
+      3005
+    ];
   };
 }

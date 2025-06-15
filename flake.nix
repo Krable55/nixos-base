@@ -80,7 +80,7 @@
           targetHost    = "192.168.50.64";
           targetUser    = "root";
           buildOnTarget = true;
-          tags = [ "media-center" "infra-media" ];
+          tags = [ "media-center" "media" "infra-media" ];
         };
         imports = [ ./hosts/media-center.nix ];
       };
@@ -97,7 +97,7 @@
 
       networking = { config, pkgs, lib, ... }: {
         deployment = {
-          targetHost    = "192.168.50.183";
+          targetHost    = "192.168.50.69";
           targetUser    = "root";
           buildOnTarget = true;
           tags = [ "network" "networking" "infra-networking" ];
