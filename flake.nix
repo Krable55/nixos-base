@@ -32,6 +32,7 @@
     nfs      = import ./modules/nfs.nix;
     backup   = import ./modules/backup.nix;
     n8n      = import ./modules/n8n.nix;
+    supabase = import ./modules/supabase.nix;
   };
   in {
     # For VM image building (e.g., `nix build`)
@@ -45,6 +46,7 @@
         self.nixosModules.nfs
         self.nixosModules.backup
         self.nixosModules.n8n
+        self.nixosModules.supabase
         self.nixosModules.default
       ];
       format = "proxmox";
@@ -63,6 +65,7 @@
         sops-nix.nixosModules.sops
         self.nixosModules.backup
         self.nixosModules.n8n
+        self.nixosModules.supabase
         self.nixosModules.default
       ];
     };
@@ -106,6 +109,16 @@
           tags = [ "network" "networking" "infra-networking" ];
         };
         imports = [ ./hosts/networking.nix ];
+      };
+
+      powerball = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.119";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags = [ "powerball" ];
+        };
+        imports = [ ./hosts/powerball.nix ];
       };
     };
   };
