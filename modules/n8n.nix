@@ -48,6 +48,7 @@ in {
           "N8N_BASIC_AUTH_ACTIVE=false"
           "N8N_EDITOR_BASE_URL=${cfg.baseUrl}"
           "N8N_DIAGNOSTICS_ENABLED=false"
+          "N8N_SECURE_COOKIE=false" #Disable if exposing to internet
           "DB_TYPE=sqlite"
           "DB_SQLITE_DATABASE=${n8nDataDir}/database.sqlite"
         ] ++ (lib.attrsets.mapAttrsToList (n: v: "${n}=${v}") cfg.env);

@@ -31,6 +31,7 @@
     colmena  = import ./modules/colmena.nix;
     nfs      = import ./modules/nfs.nix;
     backup   = import ./modules/backup.nix;
+    n8n      = import ./modules/n8n.nix;
   };
   in {
     # For VM image building (e.g., `nix build`)
@@ -43,6 +44,7 @@
         sops-nix.nixosModules.sops
         self.nixosModules.nfs
         self.nixosModules.backup
+        self.nixosModules.n8n
         self.nixosModules.default
       ];
       format = "proxmox";
@@ -60,6 +62,7 @@
         self.nixosModules.nfs
         sops-nix.nixosModules.sops
         self.nixosModules.backup
+        self.nixosModules.n8n
         self.nixosModules.default
       ];
     };

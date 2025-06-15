@@ -3,7 +3,7 @@
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
-    ../modules/dashboards/dashboards.nix
+    # ../modules/dashboards/dashboards.nix
     ../modules/colmena.nix
     ../modules/forgejo.nix
     ../modules/n8n.nix
@@ -14,6 +14,8 @@
   # Modules for building and managing homelab infra
   custom.colmena.enable = true;
   custom.forgejo.enable = true;
+
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "n8n" ];
   custom.n8n.enable = true;
 
   networking.hostName = "builder";
@@ -30,9 +32,9 @@
   #   };
   # };
   
-  custom.dashboards = {
-    enable       = true;
-  };
+  # custom.dashboards = {
+  #   enable       = true;
+  # };
 
   # custom.backup = {
   #   enable       = true;
