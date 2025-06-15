@@ -539,7 +539,7 @@ in
           "zitadel-backend" = {
             loadBalancer = {
               passHostHeader = true;
-              servers        = [ { url = "h2c://192.168.50.154:9081"; } ];
+              servers        = [ { url = "h2c://192.168.50.244:8080"; } ];
             };
           };
         };

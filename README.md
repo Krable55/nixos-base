@@ -6,6 +6,7 @@ NixOS flakes and configurations for Proxmox VMs and Colmena deployments.
 2. `sudo nixos-rebuild switch --flake .#nixos-builder`
 
 ## Colmena
+`nix-shell -p colmena`
 
 ## Apply configs on all machines:
 `colmena apply --impure`
@@ -19,11 +20,11 @@ NixOS flakes and configurations for Proxmox VMs and Colmena deployments.
 ### [Deploy secrets](https://colmena.cli.rs/unstable/features/keys.html)
 
 # Networking
-1. Create an empty WireGuard  config file here: 
-
-2. You can get a valid server config for nord VPN using [this website](https://nord-configs.onrender.com/),
+1. Create an empty WireGuard  config file here: `/etc/wireguard/wg0.conf`
+ > You can get a valid server config for nord VPN using [this website](https://nord-configs.onrender.com/),
 
 3. Follow the steps mentioned in `wireguard_helper.sh` to run the script and retrieve your NordLynx Private Key. Include this in the 
+`wg0.conf` file.
 
 ```
 sudo ip route add 193.29.61.8 via 192.168.50.1 dev ens18

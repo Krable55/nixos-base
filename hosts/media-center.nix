@@ -13,34 +13,34 @@
   networking.hostName = "media-center";
   custom.media.enable  = true;
 
-  custom.nfs = {
-    enable = true;
-    mounts = {
-      media = {
-        device = "192.168.50.154:/MediaCenter";
-        owner  = "media";
-        group  = "media";
-        mode   = "0775";
-      };
-      backups = {
-        device = "192.168.50.154:/Backups";
-        owner  = "media";
-        group  = "media";
-        mode   = "0775";
-      };
-    };
-  };
+  # custom.nfs = {
+  #   enable = true;
+  #   mounts = {
+  #     media = {
+  #       device = "192.168.50.154:/mnt/user/media";
+  #       owner  = "media";
+  #       group  = "media";
+  #       mode   = "0775";
+  #     };
+  #     backups = {
+  #       device = "192.168.50.154:/Backups";
+  #       owner  = "media";
+  #       group  = "media";
+  #       mode   = "0775";
+  #     };
+  #   };
+  # };
 
-  custom.backup = {
-    enable       = true;
-    srcDir       = "/var/lib";
-    includePaths = [ "sonarr" "radarr" "readarr" "lidarr" "overseerr" "prowlarr" "plex" "plexpy" ];
-    targetDir    = "/mnt/backups/media-center-data";
-    interval     = "daily";
-    retention = {
-      daily   = 5;
-      weekly  = 3;
-      monthly = 6;
-    };
-  };
+  # custom.backup = {
+  #   enable       = true;
+  #   srcDir       = "/var/lib";
+  #   includePaths = [ "sonarr" "radarr" "readarr" "lidarr" "overseerr" "prowlarr" "plex" "plexpy" ];
+  #   targetDir    = "/mnt/backups/media-center-data";
+  #   interval     = "daily";
+  #   retention = {
+  #     daily   = 5;
+  #     weekly  = 3;
+  #     monthly = 6;
+  #   };
+  # };
 }

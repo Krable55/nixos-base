@@ -5,92 +5,44 @@ let
   cfg = config.custom.cloudflared;
 in
 {
-  ################################################################################
-  # 1) Declare the options under `services.cloudflared`                          #
-  ################################################################################
-  options.custom.cloudflared = lib.mkEnableOption {
-    type = lib.types.bool;
-    default = false;
-    description = "Enable a Cloudflare Tunnel via cloudflared";
+  options.custom.cloudflared = {
+    enable     = lib.mkEnableOption "Enable Cloudflared tunnel";
   };
 
-  options.custom.cloudflared.name = lib.mkOption {
-    type = lib.types.str;
-    default = "";
-    description = "The name of the Cloudflare tunnel (as created in Cloudflare)";
-  };
+  config = lib.mkIf config.custom.cloudflared.enable {
+    environment.systemPackages = [ pkgs.cloudflared ];
+    systemd.tmpfiles.rules = [
+      "d /var/lib/cloudflared 0755 root root -" # Creates directory with the right permissions
+      "f /var/lib/cloudflared/tunnel-ID.json 0644 root root -" # Creates an empty environment file if it does not exist
+    ];
 
-  options.custom.cloudflared.credentialsFile = lib.mkOption {
-    type = lib.types.path;
-    description = ''
-      A JSON credentials file you downloaded from Cloudflare (e.g. 
-      `tunnel credentials create …`).  This will be placed at
-      `/etc/cloudflared/credentials.json`.
-    '';
-  };
-
-  options.custom.cloudflared.configFile = lib.mkOption {
-    type = lib.types.path;
-    default = null;
-    description = ''
-      A YAML config file (with ingress rules, etc).  If provided it will be
-      placed at `/etc/cloudflared/config.yml` and passed via
-      `--config /etc/cloudflared/config.yml`.
-    '';
-  };
-
-  options.custom.cloudflared.extraArgs = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [];
-    description = "Any extra CLI args to append to `cloudflared tunnel run`";
-  };
-
-
-  ################################################################################
-  # 2) Wire it all up when `enable = true`                                       #
-  ################################################################################
-  config = lib.mkIf cfg.enable {
-    # install the binary
-    environment.systemPackages = [ pkgs.cloudflare-cloudflared ];
-
-    # drop the credentials & config into /etc/cloudflared/
-    environment.etc."cloudflared/credentials.json" = {
-      source = cfg.credentialsFile;
-      user   = "root";
-      group  = "root";
-      mode   = "0600";
-    };
-
-    # only install config.yml if the user gave one
-    # (else `--config` will be omitted)
-    environment.etc."cloudflared/config.yml" = lib.mkIf (cfg.configFile != null) {
-      source = cfg.configFile;
-      user   = "root";
-      group  = "root";
-      mode   = "0644";
+    # Cloudflare Tunnel configuration
+    services.cloudflared = {
+      enable = true;
+      tunnels = {
+        "traefik" = {
+          credentialsFile = "/etc/cloudflared/1ddda65a-792a-48fc-a0e0-080dd44d1c96.json";
+          ingress = {
+            "*.goobtube.tv" = {
+              service = "http://localhost:8080";
+              path = "/*.(jpg|png|css|js)";
+            };
+          };
+          default = "http_status:404";
+        };
+      };
     };
 
     systemd.services.cloudflared = {
-      description = "Cloudflare Tunnel";
-      wants       = [ "network-online.target" ];
-      after       = [ "network-online.target" ];
-
-      serviceConfig = {
-        ExecStart = lib.concatStringsSep " " (
-          [ "${pkgs.cloudflare-cloudflared}/bin/cloudflared"
-            "tunnel"
-            "run"
-            cfg.name
-          ]
-          ++ lib.optional (cfg.configFile != null)
-             [ "--config" "/etc/cloudflared/config.yml" ]
-          ++ cfg.extraArgs
-        );
-        Restart = "on-failure";
-        User    = "root";
-      };
-
+      description = "Cloudflare Tunnel Service";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel run traefik";
+        User = "root";
+        Restart = "always";
+      };
     };
   };
 }
