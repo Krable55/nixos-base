@@ -3,14 +3,13 @@
 let
   cfg = config.custom.supabase;
   supabaseDir = "/var/lib/supabase";
-  composeFile = "${supabaseDir}/docker-compose.yml";
-  envFile = "${supabaseDir}/.env";
+  projectDir = "${supabaseDir}/project";
 in {
   options.custom.supabase = {
     enable = lib.mkEnableOption "Enable Supabase full stack via Docker Compose";
     version = lib.mkOption {
       type = lib.types.str;
-      default = "latest";
+      default = "main"; # Use "main" as default branch
       description = "Supabase Docker Compose version tag or branch";
     };
     exposePorts = lib.mkOption {
@@ -26,8 +25,8 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Ensure Docker is enabled
-    services.docker.enable = true;
+    environment.systemPackages = with pkgs; [ git ];
+    virtualisation.docker.enable = true;
 
     users.users.supabase = {
       isSystemUser = true;
@@ -36,12 +35,13 @@ in {
       createHome = true;
     };
 
-    # Create the data directory and fetch Docker Compose files
+    # Ensure data and project directories exist
     systemd.tmpfiles.rules = [
       "d ${supabaseDir} 0750 supabase docker -"
+      "d ${projectDir} 0750 supabase docker -"
     ];
 
-    # Fetch the latest docker-compose.yml and .env.example if not present
+    # Setup service: clone, copy, and prepare project directory
     systemd.services.supabase-setup = {
       description = "Supabase initial setup";
       wantedBy = [ "multi-user.target" ];
@@ -51,15 +51,16 @@ in {
         User = "supabase";
         WorkingDirectory = supabaseDir;
       };
+      path = with pkgs; [ git ];
       script = ''
-        set -e
-        if [ ! -e docker-compose.yml ]; then
-          git clone --depth 1 --branch ${cfg.version} https://github.com/supabase/supabase.git tmp
-          cp -rf tmp/docker/* .
-          rm -rf tmp
-        fi
-        if [ ! -e .env ]; then
-          cp .env.example .env
+        set -eux
+        # Only setup if not already done
+        if [ ! -e "${projectDir}/docker-compose.yml" ]; then
+          rm -rf supabase
+          git clone --depth 1 https://github.com/supabase/supabase.git
+          cp -rf supabase/docker/* ${projectDir}
+          cp supabase/docker/.env.example ${projectDir}/.env
+          rm -rf supabase
         fi
       '';
     };
@@ -77,7 +78,7 @@ in {
       serviceConfig = {
         Type = "simple";
         User = "supabase";
-        WorkingDirectory = supabaseDir;
+        WorkingDirectory = projectDir;
         ExecStart = "${pkgs.docker-compose}/bin/docker-compose up";
         ExecStop = "${pkgs.docker-compose}/bin/docker-compose down";
         Restart = "always";
@@ -85,7 +86,6 @@ in {
       };
     };
 
-    # Open required ports
     networking.firewall.allowedTCPPorts = cfg.exposePorts;
   };
 }
