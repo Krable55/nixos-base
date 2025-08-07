@@ -1,0 +1,252 @@
+## Kometa Configuration
+## Customized configuration with Rotten Tomatoes overlays and comprehensive collections
+
+# Global Settings
+settings:
+  cache: true
+  cache_expiry: 60
+  asset_directory: config/assets
+  asset_folders: true
+  asset_depth: 0
+  create_asset_folders: false
+  prioritize_assets: false
+  dimensional_asset_rename: false
+  download_url_assets: false
+  show_missing_season_assets: false
+  show_missing_episode_assets: false
+  show_asset_not_needed: true
+  sync_mode: append
+  minimum_items: 1
+  default_collection_order: release
+  delete_below_minimum: true
+  delete_not_scheduled: false
+  run_again_delay: 2
+  missing_only_released: false
+  only_filter_missing: false
+  show_unmanaged: true
+  show_filtered: false
+  show_options: false
+  show_missing: true
+  show_missing_assets: true
+  save_report: false
+  tvdb_language: eng
+  ignore_ids:
+  ignore_imdb_ids:
+  item_refresh_delay: 0
+  playlist_sync_to_user: all
+  playlist_exclude_user:
+  verify_ssl: true
+  custom_repo:
+  check_nightly: false
+
+# Plex Configuration
+plex:
+  url: 192.68.50.154:32400
+  token: !!str ee6qa4TWK45Zog1dJKKc
+  timeout: 60
+  db_cache: 
+  clean_bundles: false
+  empty_trash: false
+  optimize: false
+
+# The Movie Database (TMDb)
+tmdb:
+  apikey: 3ba96efb12fe2aafa920f84d4500dfbe
+  language: en
+  cache_expiry: 60
+  region: US
+
+# Libraries Configuration
+libraries:
+  Movies:
+    # Overlays - Rotten Tomatoes ratings in top-right, awards in bottom-right
+    overlay_files:
+      - default: ratings
+        template_variables:
+          horizontal_position: right
+          vertical_position: top
+          rating1: critic
+          rating1_image: rt_tomato
+          rating2: audience  
+          rating2_image: rt_popcorn
+          font_size: 32
+          back_color: 00000099
+      - default: ribbon
+        template_variables:
+          horizontal_position: right
+          vertical_position: bottom
+          style: yellow
+    
+    # Collection Files - Comprehensive movie collections
+    collection_files:
+      # Core Collections
+      - default: basic
+      - default: imdb
+      
+      # Genre Collections
+      - default: genre
+        template_variables:
+          style: white
+          sort_by: critic_rating.desc
+      - default: genre
+        template_variables:
+          style: white
+          sort_by: critic_rating.desc
+          limit: 100
+          name_format: Top 100 <<genre>> Movies
+      
+      # Decade Collections
+      - default: decade
+        template_variables:
+          style: color
+      
+      # Award Collections
+      - default: award
+        template_variables:
+          style: winner
+      - default: award
+        template_variables:
+          style: nominee
+          name_format: <<key_name>> Nominees
+      
+      # Streaming Service Collections
+      - default: streaming
+      
+      # Trending & New
+      - default: trending
+      - default: actor
+        template_variables:
+          style: person
+          data:
+            depth: 5
+            limit: 20
+      
+      # Seasonal & Holiday Collections
+      - default: seasonal
+        template_variables:
+          style: color
+      
+      # Studio Collections  
+      - default: studio
+        template_variables:
+          style: color
+      
+      # Year Collections
+      - default: year
+        template_variables:
+          style: color
+          years:
+            - 2025
+            - 2024
+            - 2023
+            - 2022
+            - 2021
+            - 2020
+
+    # Operations - Update ratings and metadata
+    operations:
+      mass_genre_update: tmdb
+      mass_content_rating_update: mdb_commonsense
+      mass_audience_rating_update: mdb_tomatoesaudience
+      mass_critic_rating_update: mdb_tomatoes
+      mass_user_rating_update: imdb
+      mass_poster_update: tmdb
+      mass_background_update: tmdb
+
+  TV Shows:
+    # Overlays - Rotten Tomatoes ratings in top-right, awards in bottom-right
+    overlay_files:
+      - default: ratings
+        template_variables:
+          horizontal_position: right
+          vertical_position: top
+          rating1: critic
+          rating1_image: rt_tomato
+          rating2: audience
+          rating2_image: rt_popcorn
+          font_size: 32
+          back_color: 00000099
+      - default: ribbon
+        template_variables:
+          horizontal_position: right
+          vertical_position: bottom
+          style: yellow
+    
+    # Collection Files - Comprehensive TV collections
+    collection_files:
+      # Core Collections
+      - default: basic
+      - default: imdb
+      
+      # Network Collections
+      - default: network
+      
+      # Genre Collections
+      - default: genre
+        template_variables:
+          style: white
+          sort_by: critic_rating.desc
+      - default: genre
+        template_variables:
+          style: white
+          sort_by: critic_rating.desc
+          limit: 100
+          name_format: Top 100 <<genre>> Shows
+      
+      # Decade Collections
+      - default: decade
+        template_variables:
+          style: color
+      
+      # Award Collections
+      - default: award
+        template_variables:
+          style: winner
+      - default: award
+        template_variables:
+          style: nominee
+          name_format: <<key_name>> Nominees
+      
+      # Streaming Service Collections  
+      - default: streaming
+      
+      # Trending & New
+      - default: trending
+      
+      # Seasonal & Holiday Collections
+      - default: seasonal
+        template_variables:
+          style: color
+      
+      # Studio Collections  
+      - default: studio
+        template_variables:
+          style: color
+      
+      # Year Collections
+      - default: year
+        template_variables:
+          style: color
+          years:
+            - 2025
+            - 2024
+            - 2023
+            - 2022
+            - 2021
+            - 2020
+
+    # Operations - Update ratings and metadata
+    operations:
+      mass_genre_update: tmdb
+      mass_content_rating_update: mdb_commonsense
+      mass_audience_rating_update: mdb_tomatoesaudience
+      mass_critic_rating_update: mdb_tomatoes
+      mass_user_rating_update: imdb
+      mass_episode_critic_rating_update: imdb
+      mass_episode_audience_rating_update: tmdb
+      mass_poster_update: tmdb
+      mass_background_update: tmdb
+
+# Playlists
+playlist_files:
+  - default: playlist

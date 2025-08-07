@@ -10,13 +10,15 @@
     ../modules/wireguard-nord.nix
     ../modules/traefik.nix
     ../modules/cloudflared.nix
+    ../modules/claude-code.nix
   ];
   
   networking.hostName = "network";
   custom.qbittorrent.enable = true;
   custom.wgnord.enable = true;
   custom.cloudflared.enable = true;
-
+  custom.claude-code.enable = true;
+  
   custom.create-ssh.enable = true;
   environment.systemPackages = [
     pkgs.cloudflared

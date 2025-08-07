@@ -3,12 +3,26 @@
 let
   cfg = config.custom.media;
 in {
+  imports = [
+    ./kometa/kometa.nix
+  ];
+
   options.custom.media = {
     enable = lib.mkEnableOption "Enable media apps and services";
   };
 
   config = lib.mkIf cfg.enable {
     nixpkgs.config.allowUnfree = true; # required for plex
+    
+    # Enable Kometa by default
+    # Schedule options: "minutely", "hourly", "daily", "weekly", "monthly", "yearly"
+    # Or custom cron format: "0 4 * * *" (4am daily), "0 2 * * 0" (2am Sunday), etc.
+    custom.kometa = {
+      enable = true;
+      schedule = "0 4 * * *";  # Run at 4:00 AM every day
+      group = "media";
+    };
+    
     users.groups.media.members = [
       "kyle"
       # "sonarr"
@@ -18,6 +32,7 @@ in {
       # "prowlarr"
       "tautulli"
       # "plex"
+      "kometa"
     ];
 
     # systemd.tmpfiles.rules = [

@@ -25,14 +25,15 @@
   system = "x86_64-linux";
 
   nixosModules = {
-    default  = import ./configuration.nix;
-    media    = import ./modules/media.nix;
-    forgejo  = import ./modules/forgejo.nix;
-    colmena  = import ./modules/colmena.nix;
-    nfs      = import ./modules/nfs.nix;
-    backup   = import ./modules/backup.nix;
-    n8n      = import ./modules/n8n.nix;
-    supabase = import ./modules/supabase.nix;
+    default    = import ./configuration.nix;
+    media      = import ./modules/media.nix;
+    forgejo    = import ./modules/forgejo.nix;
+    colmena    = import ./modules/colmena.nix;
+    nfs        = import ./modules/nfs.nix;
+    backup     = import ./modules/backup.nix;
+    n8n        = import ./modules/n8n.nix;
+    supabase   = import ./modules/supabase.nix;
+    claude     = import ./modules/claude-code.nix;
   };
   in {
     # For VM image building (e.g., `nix build`)
@@ -47,6 +48,7 @@
         self.nixosModules.backup
         self.nixosModules.n8n
         self.nixosModules.supabase
+        self.nixosModules.claude
         self.nixosModules.default
       ];
       format = "proxmox";
@@ -66,6 +68,7 @@
         self.nixosModules.backup
         self.nixosModules.n8n
         self.nixosModules.supabase
+        self.nixosModules.claude
         self.nixosModules.default
       ];
     };
