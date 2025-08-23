@@ -24,6 +24,13 @@
     mode = "600";
   };
 
+  # Tailscale service configuration
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    authKeyFile = config.age.secrets.tailscale-authkey.path;
+  };
+
   # custom.nfs = {
   #   enable = true;
   #   mounts = {

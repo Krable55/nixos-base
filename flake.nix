@@ -57,6 +57,7 @@
         self.nixosModules.colmena
         sops-nix.nixosModules.sops
         self.nixosModules.agenix
+        self.nixosModules.tailscale-agenix
         self.nixosModules.nfs
         self.nixosModules.backup
         self.nixosModules.n8n
@@ -79,6 +80,7 @@
         self.nixosModules.nfs
         sops-nix.nixosModules.sops
         self.nixosModules.agenix
+        self.nixosModules.tailscale-agenix
         self.nixosModules.backup
         self.nixosModules.n8n
         self.nixosModules.supabase
