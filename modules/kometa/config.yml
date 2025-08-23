@@ -49,6 +49,9 @@ plex:
   empty_trash: false
   optimize: false
 
+mdblist:
+  apikey: k0s90j8w4v19sjd3q5zvytl6d
+
 # The Movie Database (TMDb)
 tmdb:
   apikey: 3ba96efb12fe2aafa920f84d4500dfbe

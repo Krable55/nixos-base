@@ -28,14 +28,7 @@ in
 
     networking.networkmanager.enable = true;
 
-    # Enable Tailscale with agenix
-    age.secrets.tailscale-authkey = {
-      file = ./tailscale-authkey.age;
-      owner = "root";
-      group = "root";
-      mode = "600";
-    };
-
+    # Enable Tailscale (authkey configured in host-specific files)
     services.tailscale = {
       enable = true;
       useRoutingFeatures = "client";

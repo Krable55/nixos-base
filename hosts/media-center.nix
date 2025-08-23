@@ -16,6 +16,14 @@
   custom.media.enable  = true;
   custom.claude-code.enable = true;
 
+  # Agenix secret for Tailscale
+  age.secrets.tailscale-authkey = {
+    file = ../tailscale-authkey.age;
+    owner = "root";
+    group = "root";
+    mode = "600";
+  };
+
   # custom.nfs = {
   #   enable = true;
   #   mounts = {
