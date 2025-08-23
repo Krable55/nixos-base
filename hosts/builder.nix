@@ -7,6 +7,7 @@
     ../modules/colmena.nix
     ../modules/forgejo.nix
     ../modules/n8n.nix
+    ../modules/agenix.nix
     # ../modules/nfs.nix
     # ../modules/backup.nix
   ];
@@ -19,6 +20,21 @@
   custom.n8n.enable = true;
 
   networking.hostName = "builder";
+
+  # Agenix secret for Tailscale
+  age.secrets.tailscale-authkey = {
+    file = ../tailscale-authkey.age;
+    owner = "root";
+    group = "root";
+    mode = "600";
+  };
+
+  # Tailscale service configuration
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    authKeyFile = config.age.secrets.tailscale-authkey.path;
+  };
 
   # custom.nfs = {
   #   enable = true;

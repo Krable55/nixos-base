@@ -11,6 +11,7 @@
     ../modules/traefik.nix
     ../modules/cloudflared.nix
     ../modules/claude-code.nix
+    ../modules/agenix.nix
   ];
   
   networking.hostName = "network";
@@ -18,6 +19,21 @@
   custom.wgnord.enable = true;
   custom.cloudflared.enable = true;
   custom.claude-code.enable = true;
+
+  # Agenix secret for Tailscale
+  age.secrets.tailscale-authkey = {
+    file = ../tailscale-authkey.age;
+    owner = "root";
+    group = "root";
+    mode = "600";
+  };
+
+  # Tailscale service configuration
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    authKeyFile = config.age.secrets.tailscale-authkey.path;
+  };
   
   custom.create-ssh.enable = true;
   environment.systemPackages = [
