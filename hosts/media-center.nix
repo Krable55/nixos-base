@@ -7,11 +7,14 @@
     ../modules/media.nix
     ../modules/nfs.nix
     ../modules/backup.nix
+    ../modules/claude-code.nix
+    ../modules/agenix.nix
   ];
 
   # exactly what you had inline:
   networking.hostName = "media-center";
   custom.media.enable  = true;
+  custom.claude-code.enable = true;
 
   # custom.nfs = {
   #   enable = true;

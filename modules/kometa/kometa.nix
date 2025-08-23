@@ -18,6 +18,12 @@ in {
       description = "Kometa run schedule (daily, weekly, etc.)";
     };
 
+    runOnBoot = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Run Kometa immediately on system boot/activation";
+    };
+
     user = lib.mkOption {
       type = lib.types.str;
       default = "kometa";
@@ -65,13 +71,18 @@ in {
       description = "Kometa - Plex Meta Manager";
       after = [ "docker.service" ];
       wants = [ "docker.service" ];
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = lib.optionals cfg.runOnBoot [ "multi-user.target" ];
 
       serviceConfig = {
-        Type = "oneshot";
+        Type = "simple";
+        Restart = "no";
         User = cfg.user;
         Group = cfg.group;
+        TimeoutStartSec = "30min";
+        TimeoutStopSec = "30s";
         ExecStart = pkgs.writeShellScript "kometa-run" ''
+          set -eu
+          
           USER_ID=$(${pkgs.coreutils}/bin/id -u ${cfg.user})
           GROUP_ID=$(${pkgs.coreutils}/bin/id -g ${cfg.user})
           
@@ -86,15 +97,25 @@ in {
           echo "Config directory contents:"
           ${pkgs.coreutils}/bin/ls -la ${cfg.dataDir}/config/
           
+          # Clean up any existing container
+          ${pkgs.docker}/bin/docker rm -f kometa 2>/dev/null || true
+          
+          # Ensure subdirectories exist in config directory
+          mkdir -p ${cfg.dataDir}/config/logs
+          mkdir -p ${cfg.dataDir}/config/assets
+          ${pkgs.coreutils}/bin/chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}/config
+          
+          echo "Starting Kometa container..."
           ${pkgs.docker}/bin/docker run --rm --name kometa \
-            --user "$USER_ID:$GROUP_ID" \
-            -v /var/lib/kometa/config:/config:rw \
-            -v /var/lib/kometa/logs:/logs:rw \
+            --network host \
+            -v ${cfg.dataDir}/config:/config \
             -e PUID="$USER_ID" \
             -e PGID="$GROUP_ID" \
             -e TZ=America/Los_Angeles \
             -e KOMETA_CONFIG=/config/config.yml \
-            kometateam/kometa:latest
+            -e KOMETA_LOG_LEVEL=INFO \
+            -e KOMETA_RUN=True \
+            lscr.io/linuxserver/kometa:latest
         '';
         
         # Ensure container is cleaned up
@@ -108,9 +129,8 @@ in {
       wantedBy = [ "timers.target" ];
       
       timerConfig = {
-        OnCalendar = cfg.schedule;
+        OnCalendar = "*-*-* 03:00:00";  # Daily at 3:00 AM
         Persistent = true;
-        RandomizedDelaySec = "5m";
       };
     };
 

@@ -19,7 +19,8 @@ in {
     # Or custom cron format: "0 4 * * *" (4am daily), "0 2 * * 0" (2am Sunday), etc.
     custom.kometa = {
       enable = true;
-      schedule = "0 4 * * *";  # Run at 4:00 AM every day
+      schedule = "0 3 * * *";  # Run at 3:00 AM every day
+      runOnBoot = true;       # Run immediately for testing
       group = "media";
     };
     

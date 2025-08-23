@@ -14,26 +14,38 @@
       flake = true;
     };
 
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, nixos-generators, sops-nix, colmena, ... }@inputs: let
+  outputs = { self, nixpkgs, nixos-generators, sops-nix, agenix, colmena, ... }@inputs: let
   inherit (self) outputs;
   system = "x86_64-linux";
+  
+  # Support multiple systems for development
+  supportedSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ];
+  forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
   nixosModules = {
-    default    = import ./configuration.nix;
-    media      = import ./modules/media.nix;
-    forgejo    = import ./modules/forgejo.nix;
-    colmena    = import ./modules/colmena.nix;
-    nfs        = import ./modules/nfs.nix;
-    backup     = import ./modules/backup.nix;
-    n8n        = import ./modules/n8n.nix;
-    supabase   = import ./modules/supabase.nix;
-    claude     = import ./modules/claude-code.nix;
+    default         = import ./configuration.nix;
+    media           = import ./modules/media.nix;
+    forgejo         = import ./modules/forgejo.nix;
+    colmena         = import ./modules/colmena.nix;
+    nfs             = import ./modules/nfs.nix;
+    backup          = import ./modules/backup.nix;
+    n8n             = import ./modules/n8n.nix;
+    supabase        = import ./modules/supabase.nix;
+    claude          = import ./modules/claude-code.nix;
+    agenix          = import ./modules/agenix.nix;
+    agenix-test     = import ./modules/agenix-test.nix;
+    tailscale-agenix = import ./modules/tailscale-agenix.nix;
   };
   in {
     # For VM image building (e.g., `nix build`)
@@ -44,6 +56,7 @@
         self.nixosModules.forgejo
         self.nixosModules.colmena
         sops-nix.nixosModules.sops
+        self.nixosModules.agenix
         self.nixosModules.nfs
         self.nixosModules.backup
         self.nixosModules.n8n
@@ -65,6 +78,7 @@
         self.nixosModules.colmena
         self.nixosModules.nfs
         sops-nix.nixosModules.sops
+        self.nixosModules.agenix
         self.nixosModules.backup
         self.nixosModules.n8n
         self.nixosModules.supabase
@@ -124,5 +138,27 @@
         imports = [ ./hosts/powerball.nix ];
       };
     };
+
+    # Development shell with agenix and colmena for all supported systems
+    devShells = forAllSystems (system: {
+      default = nixpkgs.legacyPackages.${system}.mkShell {
+        buildInputs = with nixpkgs.legacyPackages.${system}; [
+          agenix.packages.${system}.default
+          colmena.packages.${system}.colmena
+          git
+          age
+          openssh
+        ];
+        
+        shellHook = ''
+          echo "🔑 Development shell loaded!"
+          echo "Available commands: agenix, colmena, git, age, ssh"
+          echo ""
+          echo "Quick commands:"
+          echo "  colmena apply --on media-center"
+          echo "  agenix -e secret.age"
+        '';
+      };
+    });
   };
 }

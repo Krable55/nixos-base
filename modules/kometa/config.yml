@@ -41,8 +41,8 @@ settings:
 
 # Plex Configuration
 plex:
-  url: 192.68.50.154:32400
-  token: !!str ee6qa4TWK45Zog1dJKKc
+  url: http://192.168.50.154:32400
+  token: rqyWME8LpHPoNwLnFyAG
   timeout: 60
   db_cache: 
   clean_bundles: false

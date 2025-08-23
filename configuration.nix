@@ -28,11 +28,18 @@ in
 
     networking.networkmanager.enable = true;
 
-    # Enable Tailscale
+    # Enable Tailscale with agenix
+    age.secrets.tailscale-authkey = {
+      file = ./tailscale-authkey.age;
+      owner = "root";
+      group = "root";
+      mode = "600";
+    };
+
     services.tailscale = {
       enable = true;
       useRoutingFeatures = "client";
-      authKeyFile = lib.mkIf config.sops.secrets.tailscale-authkey.path;
+      authKeyFile = config.age.secrets.tailscale-authkey.path;
     };
 
     # Set the time zone.
