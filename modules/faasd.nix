@@ -127,11 +127,34 @@ in {
     # Install faasd and faas-cli packages
     environment.systemPackages = [ faasdPackage faasCli ];
     
+    # faasd install service (one-shot to initialize)
+    systemd.services.faasd-install = {
+      description = "Install faasd configuration";
+      after = [ "containerd.service" "network.target" ];
+      wants = [ "containerd.service" ];
+      wantedBy = [ "multi-user.target" ];
+      
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+        RemainAfterExit = true;
+        ExecStart = "${faasdPackage}/bin/faasd install";
+        
+        # Environment variables for installation
+        Environment = [
+          "basic_auth_user=${cfg.basicAuthUser}"
+          "basic_auth_password_file=${config.age.secrets.faasd-basic-auth-password.path}"
+          "secret_mount_path=${cfg.dataDir}/secrets"
+          "port=${toString cfg.port}"
+        ];
+      };
+    };
+
     # faasd systemd service
     systemd.services.faasd = {
       description = "faasd (OpenFaaS for Developers)";
-      after = [ "containerd.service" "network.target" ];
-      wants = [ "containerd.service" ];
+      after = [ "faasd-install.service" "containerd.service" "network.target" ];
+      wants = [ "faasd-install.service" "containerd.service" ];
       wantedBy = [ "multi-user.target" ];
       
       serviceConfig = {
