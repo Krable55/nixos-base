@@ -168,8 +168,8 @@ in {
       
       serviceConfig = {
         Type = "simple";
-        User = cfg.user;
-        Group = cfg.group;
+        User = "root";
+        Group = "root";
         WorkingDirectory = cfg.dataDir;
         Restart = "always";
         RestartSec = "2s";
