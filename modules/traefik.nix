@@ -398,6 +398,16 @@ in
             };
           };
 
+          faasd = {
+            rule       = "Host(`faas.goobtube.tv`)";
+            service    = "faasd-backend";
+            middlewares = [ "oauth-errors" "oauth-auth-redirect" ];
+            tls = {
+              certResolver = "leresolver";
+              domains = [ { main = "goobtube.tv"; sans = [ "*.goobtube.tv" ]; } ];
+            };
+          };
+
           zitadel = {
             rule       = "Host(`auth.goobtube.tv`) && PathPrefix(`/`)";
             service    = "zitadel-backend";
@@ -536,6 +546,12 @@ in
               servers = [ { url = "http://192.168.50.154:80"; } ];
             };
           };
+          "faasd-backend" = {
+            loadBalancer = {
+              servers = [ { url = "http://192.168.50.244:8081"; } ];
+            };
+          };
+
           "zitadel-backend" = {
             loadBalancer = {
               passHostHeader = true;

@@ -20,6 +20,9 @@ in {
   # Test secret for verifying agenix works
   "test-secret.age".publicKeys = allUsers ++ allSystems;
   
+  # faasd basic auth password - for serverless functions
+  "faasd-basic-auth-password.age".publicKeys = allUsers ++ allSystems;
+  
   # Future secrets can be added here...
   # "example-secret.age".publicKeys = [ kyle media-center ];
 }

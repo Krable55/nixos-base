@@ -12,6 +12,7 @@
     ../modules/cloudflared.nix
     ../modules/claude-code.nix
     ../modules/agenix.nix
+    ../modules/faasd.nix
   ];
   
   networking.hostName = "network";
@@ -62,6 +63,12 @@
 
   custom.traefik = {
     enable = true;
+  };
+
+  custom.faasd = {
+    enable = true;
+    port = 8081;
+    openFirewall = true;
   };
 
   users.groups.downloaders.members = [

@@ -46,6 +46,7 @@
     agenix          = import ./modules/agenix.nix;
     agenix-test     = import ./modules/agenix-test.nix;
     tailscale-agenix = import ./modules/tailscale-agenix.nix;
+    faasd           = import ./modules/faasd.nix;
   };
   in {
     # For VM image building (e.g., `nix build`)
