@@ -1,0 +1,61 @@
+version: "3.7"
+services:
+  gateway:
+    volumes:
+      - type: bind
+        source: /var/lib/faasd/secrets/basic-auth-user
+        target: /var/secrets/basic-auth-user
+      - type: bind
+        source: /var/lib/faasd/secrets/basic-auth-password
+        target: /var/secrets/basic-auth-password
+    environment:
+      - basic_auth=true
+      - secret_mount_path=/var/secrets
+      - scale_from_zero=true
+      - function_namespace=openfaas-fn
+    image: ghcr.io/openfaas/gateway:0.27.0
+    networks:
+      - openfaas
+    ports:
+      - "127.0.0.1:8081:8080"
+    deploy:
+      placement:
+        constraints:
+          - "node.platform.os == linux"
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 20
+        window: 380s
+
+  prometheus:
+    image: prom/prometheus:v2.14.0
+    environment:
+      no_proxy: "gateway"
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.listen-address=0.0.0.0:9090'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - openfaas
+    deploy:
+      placement:
+        constraints:
+          - "node.platform.os == linux"
+
+networks:
+  openfaas:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+
+configs:
+  prometheus_config:
+    name: prometheus_config
+    file: ./prometheus.yml

@@ -127,34 +127,42 @@ in {
     # Install faasd and faas-cli packages
     environment.systemPackages = [ faasdPackage faasCli ];
     
-    # faasd install service (one-shot to initialize)
-    systemd.services.faasd-install = {
-      description = "Install faasd configuration";
-      after = [ "containerd.service" "network.target" ];
-      wants = [ "containerd.service" ];
+    # Initialize faasd directories and configuration
+    systemd.services.faasd-init = {
+      description = "Initialize faasd configuration";
       wantedBy = [ "multi-user.target" ];
+      before = [ "faasd.service" ];
       
       serviceConfig = {
         Type = "oneshot";
         User = "root";
         RemainAfterExit = true;
-        ExecStart = "${faasdPackage}/bin/faasd install";
-        
-        # Environment variables for installation
-        Environment = [
-          "basic_auth_user=${cfg.basicAuthUser}"
-          "basic_auth_password_file=${config.age.secrets.faasd-basic-auth-password.path}"
-          "secret_mount_path=${cfg.dataDir}/secrets"
-          "port=${toString cfg.port}"
-        ];
       };
+      
+      script = ''
+        # Create necessary directories
+        mkdir -p ${cfg.dataDir}/secrets
+        
+        # Copy configuration files
+        cp ${./faasd/docker-compose.yaml} ${cfg.dataDir}/docker-compose.yaml
+        cp ${./faasd/prometheus.yml} ${cfg.dataDir}/prometheus.yml
+        
+        # Set up basic auth files
+        echo "${cfg.basicAuthUser}" > ${cfg.dataDir}/secrets/basic-auth-user
+        if [ -f "${config.age.secrets.faasd-basic-auth-password.path}" ]; then
+          cp "${config.age.secrets.faasd-basic-auth-password.path}" ${cfg.dataDir}/secrets/basic-auth-password
+        fi
+        
+        # Set permissions
+        chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}
+      '';
     };
 
     # faasd systemd service
     systemd.services.faasd = {
       description = "faasd (OpenFaaS for Developers)";
-      after = [ "faasd-install.service" "containerd.service" "network.target" ];
-      wants = [ "faasd-install.service" "containerd.service" ];
+      after = [ "faasd-init.service" "containerd.service" "network.target" ];
+      wants = [ "faasd-init.service" "containerd.service" ];
       wantedBy = [ "multi-user.target" ];
       
       serviceConfig = {
