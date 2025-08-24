@@ -112,6 +112,7 @@ in {
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
+      extraGroups = [ "containerd" ];  # Add to containerd group for socket access
       home = cfg.dataDir;
       createHome = true;
     };
