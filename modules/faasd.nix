@@ -3,34 +3,53 @@
 let
   cfg = config.custom.faasd;
   
-  # faasd binary - we'll need to package this or get it from nixpkgs
+  # Use the prebuilt faasd binary from GitHub releases
   faasdPackage = pkgs.stdenv.mkDerivation rec {
     pname = "faasd";
-    version = "0.21.3";
+    version = "0.19.7";
     
-    src = pkgs.fetchFromGitHub {
-      owner = "openfaas";
-      repo = "faasd";
-      rev = version;
-      sha256 = lib.fakeHash; # We'll fix this after first build attempt
+    src = pkgs.fetchurl {
+      url = "https://github.com/openfaas/faasd/releases/download/${version}/faasd";
+      sha256 = "1vq349rhlpl293d8rb9b0ym2wp1sskjvicgp4zb3vlix78ar0b5m";
     };
     
-    nativeBuildInputs = with pkgs; [ go ];
-    
-    buildPhase = ''
-      export GOCACHE=$TMPDIR/go-cache
-      export GOPATH=$TMPDIR/go
-      go build -o faasd
-    '';
+    dontUnpack = true;
     
     installPhase = ''
       mkdir -p $out/bin
-      cp faasd $out/bin/
+      cp $src $out/bin/faasd
+      chmod +x $out/bin/faasd
     '';
     
     meta = with lib; {
       description = "Lightweight & portable faas engine";
       homepage = "https://github.com/openfaas/faasd";
+      license = licenses.mit;
+      maintainers = [ ];
+    };
+  };
+
+  # Use the prebuilt faas-cli binary from GitHub releases
+  faasCli = pkgs.stdenv.mkDerivation rec {
+    pname = "faas-cli";
+    version = "0.17.7";
+    
+    src = pkgs.fetchurl {
+      url = "https://github.com/openfaas/faas-cli/releases/download/${version}/faas-cli";
+      sha256 = "1fnggvshgpz4yljja22vm141nmj8zsf2zlq5mvlhzhhmyjj5jkvm";
+    };
+    
+    dontUnpack = true;
+    
+    installPhase = ''
+      mkdir -p $out/bin
+      cp $src $out/bin/faas-cli
+      chmod +x $out/bin/faas-cli
+    '';
+    
+    meta = with lib; {
+      description = "Official CLI for OpenFaaS";
+      homepage = "https://github.com/openfaas/faas-cli";
       license = licenses.mit;
       maintainers = [ ];
     };
@@ -105,8 +124,8 @@ in {
       "d ${cfg.dataDir}/secrets 0755 ${cfg.user} ${cfg.group} - -"
     ];
     
-    # Install faasd package
-    environment.systemPackages = [ faasdPackage ];
+    # Install faasd and faas-cli packages
+    environment.systemPackages = [ faasdPackage faasCli ];
     
     # faasd systemd service
     systemd.services.faasd = {
