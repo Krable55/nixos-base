@@ -408,6 +408,16 @@ in
             };
           };
 
+          "faasd-portal" = {
+            rule       = "Host(`faas.goobtube.tv`) && PathPrefix(`/ui`)";
+            service    = "faasd-portal-backend";
+            middlewares = [ "oauth-errors" "oauth-auth-redirect" ];
+            tls = {
+              certResolver = "leresolver";
+              domains = [ { main = "goobtube.tv"; sans = [ "*.goobtube.tv" ]; } ];
+            };
+          };
+
           zitadel = {
             rule       = "Host(`auth.goobtube.tv`) && PathPrefix(`/`)";
             service    = "zitadel-backend";
@@ -548,7 +558,13 @@ in
           };
           "faasd-backend" = {
             loadBalancer = {
-              servers = [ { url = "http://192.168.50.244:8081"; } ];
+              servers = [ { url = "http://192.168.50.69:8081"; } ];
+            };
+          };
+          
+          "faasd-portal-backend" = {
+            loadBalancer = {
+              servers = [ { url = "http://192.168.50.69:8081/function/portal"; } ];
             };
           };
 

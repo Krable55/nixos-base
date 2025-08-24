@@ -98,7 +98,22 @@ in {
   
   config = lib.mkIf cfg.enable {
     # Ensure containerd is available (required by faasd)
-    virtualisation.containerd.enable = true;
+    virtualisation.containerd = {
+      enable = true;
+      settings = {
+        version = 2;
+        plugins."io.containerd.grpc.v1.cri" = {
+          enable_unprivileged_ports = true;
+          enable_unprivileged_icmp = true;
+        };
+      };
+    };
+    
+    # Set kernel-level file descriptor limits
+    boot.kernel.sysctl = {
+      "fs.file-max" = 2097152;
+      "fs.nr_open" = 1048576;
+    };
     
     # Agenix secret for basic auth password
     age.secrets.faasd-basic-auth-password = {
@@ -126,7 +141,7 @@ in {
     ];
     
     # Install faasd and faas-cli packages
-    environment.systemPackages = [ faasdPackage faasCli ];
+    environment.systemPackages = [ faasdPackage faasCli pkgs.cni-plugins pkgs.iptables pkgs.curl ];
     
     # Initialize faasd directories and configuration
     systemd.services.faasd-init = {
@@ -145,6 +160,16 @@ in {
         mkdir -p ${cfg.dataDir}/secrets
         mkdir -p /etc/cni/net.d
         mkdir -p /opt/cni/bin
+        mkdir -p /var/lib/cni
+        mkdir -p /var/run/cni
+        
+        # Copy official faasd configuration files
+        cp ${./faasd/docker-compose.yaml} ${cfg.dataDir}/docker-compose.yaml
+        cp ${./faasd/prometheus.yml} ${cfg.dataDir}/prometheus.yml
+        
+        # Create additional directories needed by docker-compose
+        mkdir -p ${cfg.dataDir}/nats
+        mkdir -p ${cfg.dataDir}/prometheus
         
         # Set up basic auth files
         echo "${cfg.basicAuthUser}" > ${cfg.dataDir}/secrets/basic-auth-user
@@ -155,12 +180,20 @@ in {
         # Set permissions
         chmod 755 /etc/cni/net.d
         chmod 755 /opt/cni/bin
+        
+        # Install CNI plugins
+        cp -r ${pkgs.cni-plugins}/bin/* /opt/cni/bin/
+        chmod +x /opt/cni/bin/*
+        
+        # Create symlink so containers can find faasd at expected path
+        mkdir -p /usr/local/bin
+        ln -sf ${faasdPackage}/bin/faasd /usr/local/bin/faasd
       '';
     };
 
-    # faasd systemd service
+    # faasd service (complete OpenFaaS stack)
     systemd.services.faasd = {
-      description = "faasd (OpenFaaS for Developers)";
+      description = "faasd OpenFaaS stack";
       after = [ "faasd-init.service" "containerd.service" "network.target" ];
       wants = [ "faasd-init.service" "containerd.service" ];
       wantedBy = [ "multi-user.target" ];
@@ -172,13 +205,17 @@ in {
         WorkingDirectory = cfg.dataDir;
         Restart = "always";
         RestartSec = "2s";
-        ExecStart = "${faasdPackage}/bin/faasd provider";
+        ExecStart = "${faasdPackage}/bin/faasd up";
         
         # Security settings
         NoNewPrivileges = true;
         PrivateTmp = true;
         ProtectSystem = "strict";
-        ReadWritePaths = [ cfg.dataDir "/tmp" "/etc/cni" "/opt/cni" ];
+        ReadWritePaths = [ cfg.dataDir "/tmp" "/etc/cni" "/opt/cni" "/var/lib/cni" "/var/run/cni" ];
+        
+        # Resource limits - set high for container workloads
+        LimitNOFILE = 1048576;
+        LimitNPROC = 1048576;
         
         # Environment variables
         Environment = [
@@ -186,11 +223,41 @@ in {
           "basic_auth_password_file=${config.age.secrets.faasd-basic-auth-password.path}"
           "secret_mount_path=${cfg.dataDir}/secrets"
           "port=${toString cfg.port}"
+          "PATH=${pkgs.iptables}/bin:${pkgs.cni-plugins}/bin:/run/current-system/sw/bin"
+        ];
+        
+        # Set ulimit before starting faasd
+        ExecStartPre = [
+          "${pkgs.bash}/bin/bash -c 'ulimit -n 65536'"
+          "${pkgs.coreutils}/bin/echo $(ulimit -n)"
         ];
       };
     };
+
     
     # Open firewall if requested
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [ cfg.port ];
+    
+    # Increase system limits for container workloads
+    systemd.settings.Manager = {
+      DefaultLimitNOFILE = 1048576;
+      DefaultLimitNPROC = 1048576;
+    };
+    
+    # Set limits for containerd as well
+    systemd.services.containerd.serviceConfig = {
+      LimitNOFILE = lib.mkForce 1048576;
+      LimitNPROC = lib.mkForce 1048576;
+      # Ensure containerd passes limits to child processes
+      ExecStartPre = "${pkgs.bash}/bin/bash -c 'ulimit -n 65536'";
+    };
+    
+    # Set system-wide limits for all users to prevent file descriptor issues
+    security.pam.loginLimits = [
+      { domain = "*"; type = "soft"; item = "nofile"; value = "65536"; }
+      { domain = "*"; type = "hard"; item = "nofile"; value = "1048576"; }
+      { domain = "root"; type = "soft"; item = "nofile"; value = "65536"; }
+      { domain = "root"; type = "hard"; item = "nofile"; value = "1048576"; }
+    ];
   };
 }
