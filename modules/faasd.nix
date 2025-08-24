@@ -143,6 +143,8 @@ in {
       script = ''
         # Create necessary directories
         mkdir -p ${cfg.dataDir}/secrets
+        mkdir -p /etc/cni/net.d
+        mkdir -p /opt/cni/bin
         
         # Copy configuration files
         cp ${./faasd/docker-compose.yaml} ${cfg.dataDir}/docker-compose.yaml
@@ -156,6 +158,8 @@ in {
         
         # Set permissions
         chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}
+        chmod 755 /etc/cni/net.d
+        chmod 755 /opt/cni/bin
       '';
     };
 
@@ -179,7 +183,7 @@ in {
         NoNewPrivileges = true;
         PrivateTmp = true;
         ProtectSystem = "strict";
-        ReadWritePaths = [ cfg.dataDir "/tmp" ];
+        ReadWritePaths = [ cfg.dataDir "/tmp" "/etc/cni" "/opt/cni" ];
         
         # Environment variables
         Environment = [
