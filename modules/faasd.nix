@@ -146,10 +146,6 @@ in {
         mkdir -p /etc/cni/net.d
         mkdir -p /opt/cni/bin
         
-        # Copy configuration files
-        cp ${./faasd/docker-compose.yaml} ${cfg.dataDir}/docker-compose.yaml
-        cp ${./faasd/prometheus.yml} ${cfg.dataDir}/prometheus.yml
-        
         # Set up basic auth files
         echo "${cfg.basicAuthUser}" > ${cfg.dataDir}/secrets/basic-auth-user
         if [ -f "${config.age.secrets.faasd-basic-auth-password.path}" ]; then
@@ -157,7 +153,6 @@ in {
         fi
         
         # Set permissions
-        chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}
         chmod 755 /etc/cni/net.d
         chmod 755 /opt/cni/bin
       '';
@@ -177,7 +172,7 @@ in {
         WorkingDirectory = cfg.dataDir;
         Restart = "always";
         RestartSec = "2s";
-        ExecStart = "${faasdPackage}/bin/faasd up";
+        ExecStart = "${faasdPackage}/bin/faasd provider";
         
         # Security settings
         NoNewPrivileges = true;
