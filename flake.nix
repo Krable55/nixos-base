@@ -140,6 +140,16 @@
         };
         imports = [ ./hosts/powerball.nix ];
       };
+      
+      trader = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.86";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags = [ "trader" ];
+        };
+        imports = [ ./hosts/trader.nix ];
+      };
     };
 
     # Development shell with agenix and colmena for all supported systems
