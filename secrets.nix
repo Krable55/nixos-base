@@ -8,9 +8,10 @@ let
   builder = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKGBOr+16aLDiNF5sRQmTZ9AsHmnE9tVF1k8Qul6w3ho";
   networking = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINbKk9Z8Wdugwemk3Q3peHu5a56ow1LroxQslLp+xGCA";
   powerball = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDWEg9z+P1KtpqyXgAceCfAp6mbHmG0o/P2GGu4YZUsw";
-  
+  trader = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMzlakBngVBQTzqOkj+N+81Il3xpbtPnBqC9Iu+Ckozd";
+
   # Define which keys can edit/decrypt which secrets
-  allSystems = [ media-center builder networking powerball ];
+  allSystems = [ media-center builder networking powerball trader ];
   allUsers = [ kyle ];
   
 in {
