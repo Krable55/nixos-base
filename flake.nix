@@ -9,11 +9,6 @@
       flake = true;
     };
 
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      flake = true;
-    };
-
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,7 +41,9 @@
     agenix          = import ./modules/agenix.nix;
     agenix-test     = import ./modules/agenix-test.nix;
     tailscale-agenix = import ./modules/tailscale-agenix.nix;
-    faasd           = import ./modules/faasd.nix;
+    k3s             = import ./modules/k3s.nix;
+    nuclio          = import ./modules/nuclio;
+    nuclio-functions = import ./modules/nuclio/functions.nix;
   };
   in {
     # For VM image building (e.g., `nix build`)

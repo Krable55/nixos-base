@@ -27,7 +27,7 @@ custom.claude-code.enable = true;
 
 # Agenix secret for Tailscale
 age.secrets.tailscale-authkey = {
-  file = ../tailscale-authkey.age;
+  file = ../secrets/global/tailscale-authkey.age;
   owner = "root";
   group = "root";
   mode = "600";

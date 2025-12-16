@@ -12,7 +12,8 @@
     ../modules/cloudflared.nix
     ../modules/claude-code.nix
     ../modules/agenix.nix
-    ../modules/faasd.nix
+    ../modules/nuclio
+    ../modules/nuclio/functions.nix
   ];
   
   networking.hostName = "network";
@@ -23,7 +24,22 @@
 
   # Agenix secret for Tailscale
   age.secrets.tailscale-authkey = {
-    file = ../tailscale-authkey.age;
+    file = ../secrets/global/tailscale-authkey.age;
+    owner = "root";
+    group = "root";
+    mode = "600";
+  };
+
+  # Trader Alpaca secrets
+  age.secrets.trader-alpaca-paper-api-key = {
+    file = ../secrets/trader/alpaca/paper-api-key.age;
+    owner = "root";
+    group = "root";
+    mode = "600";
+  };
+
+  age.secrets.trader-alpaca-paper-api-secret = {
+    file = ../secrets/trader/alpaca/paper-api-secret.age;
     owner = "root";
     group = "root";
     mode = "600";
@@ -65,10 +81,205 @@
     enable = true;
   };
 
-  custom.faasd = {
+  custom.nuclio = {
     enable = true;
-    port = 8081;
-    openFirewall = true;
+    dashboard.port = 8070;
+    variables = {
+      TEST = "test-123";
+    };
+  };
+
+  # Enable Nuclio functions
+  custom.nuclio-functions = {
+    enable = true;
+    functions.account-health = {
+      handler = "handler:handler";
+      runtime = "nodejs";
+      description = "Acount health function";
+      
+      build = {
+        baseImage = "node:18-alpine";
+        
+        # Use git repository source instead of inline code
+        repository = {
+          url = "http://192.168.50.243:3000/kyllswitch/trader";
+          branch = "main";
+          path = "functions/deploy/account-health";  # Work directory in repository (relative path)
+          # headers = { Authorization = "token ghp_xxx"; };  # for private repos if needed
+        };
+      };
+      
+      triggers = {
+        http = {
+          kind = "http";
+          maxWorkers = 2;
+        };
+      };
+      
+      env = [
+        {
+          name = "NODE_ENV";
+          value = "production";
+        }
+        {
+          name = "FUNCTION_NAME";
+          value = "account-health";
+        }
+        {
+          name = "ALPACA_BASE_URL";
+          value = "https://paper-api.alpaca.markets";
+        }
+        {
+          name = "ALPACA_API_KEY";
+          valueFrom.secretPath = config.age.secrets.trader-alpaca-paper-api-key.path;
+        }
+        {
+          name = "ALPACA_API_SECRET";
+          valueFrom.secretPath = config.age.secrets.trader-alpaca-paper-api-secret.path;
+        }
+      ];
+      
+      resources = {
+        limits = {
+          memory = "128Mi";
+          cpu = "100m";
+        };
+        requests = {
+          memory = "64Mi";
+          cpu = "50m";
+        };
+      };
+      
+      minReplicas = 1;
+      maxReplicas = 3;
+      targetCPU = 50;
+    };
+
+    functions.signal-generator = {
+      handler = "handler:handler";
+      runtime = "nodejs";
+      description = "Signal generator function";
+      
+      build = {
+        baseImage = "node:18-alpine";
+        
+        # Use git repopathsitory source instead of inline code
+        repository = {
+          url = "http://192.168.50.243:3000/kyllswitch/trader";
+          branch = "main";
+          path = "functions/deploy/signal-generator";
+          # headers = { Authorization = "token ghp_xxx"; };  # for private repos
+        };
+      };
+      
+      triggers = {
+        http = {
+          kind = "http";
+          maxWorkers = 2;
+        };
+      };
+      
+      env = [
+        {
+          name = "NODE_ENV";
+          value = "production";
+        }
+        {
+          name = "FUNCTION_NAME";
+          value = "account-health";
+        }
+        {
+          name = "ALPACA_BASE_URL";
+          value = "https://paper-api.alpaca.markets";
+        }
+        {
+          name = "ALPACA_API_KEY";
+          valueFrom.secretPath = config.age.secrets.trader-alpaca-paper-api-key.path;
+        }
+        {
+          name = "ALPACA_API_SECRET";
+          valueFrom.secretPath = config.age.secrets.trader-alpaca-paper-api-secret.path;
+        }
+      ];
+      
+      resources = {
+        limits = {
+          memory = "128Mi";
+          cpu = "100m";
+        };
+        requests = {
+          memory = "64Mi";
+          cpu = "50m";
+        };
+      };
+      
+      minReplicas = 1;
+      maxReplicas = 3;
+      targetCPU = 50;
+    };
+
+    functions.account-info = {
+      handler = "handler:handler";
+      runtime = "nodejs";
+      description = "Account info";
+      
+      build = {
+        baseImage = "node:18-alpine";
+        
+        # Use git repopathsitory source instead of inline code
+        repository = {
+          url = "http://192.168.50.243:3000/kyllswitch/trader";
+          branch = "main";
+          path = "functions/deploy/account-info";
+          # headers = { Authorization = "token ghp_xxx"; };  # for private repos
+        };
+      };
+      
+      triggers = {
+        http = {
+          kind = "http";
+          maxWorkers = 2;
+        };
+      };
+      
+      env = [
+        {
+          name = "NODE_ENV";
+          value = "production";
+        }
+        {
+          name = "FUNCTION_NAME";
+          value = "account-health";
+        }
+        {
+          name = "ALPACA_BASE_URL";
+          value = "https://paper-api.alpaca.markets";
+        }
+        {
+          name = "ALPACA_API_KEY";
+          valueFrom.secretPath = config.age.secrets.trader-alpaca-paper-api-key.path;
+        }
+        {
+          name = "ALPACA_API_SECRET";
+          valueFrom.secretPath = config.age.secrets.trader-alpaca-paper-api-secret.path;
+        }
+      ];
+      
+      resources = {
+        limits = {
+          memory = "128Mi";
+          cpu = "100m";
+        };
+        requests = {
+          memory = "64Mi";
+          cpu = "50m";
+        };
+      };
+      
+      minReplicas = 1;
+      maxReplicas = 3;
+      targetCPU = 50;
+    };
   };
 
   users.groups.downloaders.members = [

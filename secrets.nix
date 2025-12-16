@@ -14,16 +14,45 @@ let
   allSystems = [ media-center builder networking powerball trader ];
   allUsers = [ kyle ];
   
-in {
-  # Tailscale authkey - accessible by all systems
-  "tailscale-authkey.age".publicKeys = allUsers ++ allSystems;
+  # Helper function to create secrets for a specific service on a host
+  mkServiceSecrets = hostName: host: service: secretNames:
+    builtins.listToAttrs (map (name: {
+      name = "secrets/${hostName}/${service}/${name}.age";
+      value = { publicKeys = allUsers ++ [ host ]; };
+    }) secretNames);
   
-  # Test secret for verifying agenix works
-  "test-secret.age".publicKeys = allUsers ++ allSystems;
+  # Helper function for service secrets available to all hosts
+  mkGlobalSecrets = service: secretNames:
+    builtins.listToAttrs (map (name: {
+      name = "secrets/global/${service}-${name}.age";
+      value = { publicKeys = allUsers ++ allSystems; };
+    }) secretNames);
   
-  # faasd basic auth password - for serverless functions
-  "faasd-basic-auth-password.age".publicKeys = allUsers ++ allSystems;
+in 
+# Combine all secret definitions
+(mkGlobalSecrets "tailscale" [ "authkey" ]) //
+(mkGlobalSecrets "test" [ "secret" ]) //
+(mkServiceSecrets "networking" networking "faasd" [ "basic-auth-password" ]) //
+(mkServiceSecrets "trader" trader "alpaca" [ 
+  "paper-api-key"
+  "paper-api-secret"
+]) //
+(mkServiceSecrets "trader" trader "supabase" [ 
+  "admin-password" 
+  "postgres-password"
+  "jwt-secret"
+  "anon-key" 
+  "service-role-key"
+  "secret-key-base"
+  "vault-enc-key"
+]) //
+{
+  # Cross-host secrets (needed for Nuclio functions on networking host)
+  "secrets/trader/alpaca/paper-api-key.age".publicKeys = allUsers ++ [ networking trader ];
+  "secrets/trader/alpaca/paper-api-secret.age".publicKeys = allUsers ++ [ networking trader ];
+  "secrets/trader/supabase/anon-key.age".publicKeys = allUsers ++ [ networking trader ];
   
   # Future secrets can be added here...
-  # "example-secret.age".publicKeys = [ kyle media-center ];
+  # Manual overrides if needed:
+  # "custom-secret.age".publicKeys = [ kyle media-center ];
 }
