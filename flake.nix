@@ -66,7 +66,8 @@
       format = "proxmox";
     };
 
-    overlays = import ./overlays {inherit inputs;};
+    # overlays = import ./overlays {inherit inputs;};
+
 
     # System config for use with `nixos-rebuild`
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
@@ -87,7 +88,7 @@
       ];
     };
 
-   colmena = {
+   colmenaHive = colmena.lib.makeHive {
       meta = {
         nixpkgs = import nixpkgs {
           system = "x86_64-linux";

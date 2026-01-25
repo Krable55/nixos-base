@@ -37,6 +37,10 @@ in
   "paper-api-key"
   "paper-api-secret"
 ]) //
+(mkServiceSecrets "networking" networking "atuin" [
+  "jwt-secret"
+  "database-key"
+]) //
 (mkServiceSecrets "trader" trader "supabase" [ 
   "admin-password" 
   "postgres-password"
