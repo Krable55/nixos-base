@@ -26,6 +26,7 @@
   # Atuin shell history server
   custom.atuin = {
     enable = true;
+    openRegistration = true;
     jwtSecretFile = config.age.secrets.atuin-jwt-secret.path;
     databaseKeyFile = config.age.secrets.atuin-database-key.path;
   };

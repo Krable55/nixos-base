@@ -169,6 +169,15 @@ in
             };
           };
 
+          atuin = {
+            rule    = "Host(`atuin.goobtube.tv`)";
+            service = "atuin-backend";
+            tls = {
+              certResolver = "leresolver";
+              domains = [ { main = "goobtube.tv"; sans = [ "*.goobtube.tv" ]; } ];
+            };
+          };
+
           code = {
             rule       = "Host(`code.goobtube.tv`) && PathPrefix(`/`)";
             service    = "code-backend";
@@ -572,6 +581,12 @@ in
             loadBalancer = {
               passHostHeader = true;
               servers        = [ { url = "h2c://192.168.50.244:8080"; } ];
+            };
+          };
+
+          "atuin-backend" = {
+            loadBalancer = {
+              servers = [ { url = "http://127.0.0.1:8888"; } ];
             };
           };
         };
