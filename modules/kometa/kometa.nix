@@ -5,7 +5,7 @@ let
 in {
   options.custom.kometa = {
     enable = lib.mkEnableOption "Enable Kometa (Plex Meta Manager)";
-    
+
     configFile = lib.mkOption {
       type = lib.types.path;
       default = ./config.yml;
@@ -41,6 +41,32 @@ in {
       default = "/var/lib/kometa";
       description = "Data directory for Kometa";
     };
+
+    plexUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://192.168.50.154:32400";
+      description = "Plex server URL";
+    };
+
+    secrets = {
+      plexTokenFile = lib.mkOption {
+        type = lib.types.str;
+        default = "../secrets/media-center/kometa/plex-token.age";
+        description = "Path to agenix encrypted Plex token file";
+      };
+
+      mdblistApiKeyFile = lib.mkOption {
+        type = lib.types.str;
+        default = "../secrets/media-center/kometa/mdblist-apikey.age";
+        description = "Path to agenix encrypted MDBList API key file";
+      };
+
+      tmdbApiKeyFile = lib.mkOption {
+        type = lib.types.str;
+        default = "../secrets/media-center/kometa/tmdb-apikey.age";
+        description = "Path to agenix encrypted TMDb API key file";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -58,6 +84,30 @@ in {
 
     # Ensure media group exists
     users.groups.${cfg.group} = {};
+
+    # Agenix secrets
+    age.secrets = {
+      kometa-plex-token = {
+        file = cfg.secrets.plexTokenFile;
+        owner = cfg.user;
+        group = cfg.group;
+        mode = "400";
+      };
+
+      kometa-mdblist-apikey = {
+        file = cfg.secrets.mdblistApiKeyFile;
+        owner = cfg.user;
+        group = cfg.group;
+        mode = "400";
+      };
+
+      kometa-tmdb-apikey = {
+        file = cfg.secrets.tmdbApiKeyFile;
+        owner = cfg.user;
+        group = cfg.group;
+        mode = "400";
+      };
+    };
 
     # Create data directory structure
     systemd.tmpfiles.rules = [
@@ -82,30 +132,36 @@ in {
         TimeoutStopSec = "30s";
         ExecStart = pkgs.writeShellScript "kometa-run" ''
           set -eu
-          
+
           USER_ID=$(${pkgs.coreutils}/bin/id -u ${cfg.user})
           GROUP_ID=$(${pkgs.coreutils}/bin/id -g ${cfg.user})
-          
+
+          # Read secrets into environment variables
+          # Note: NO underscores in secret names (Kometa requirement)
+          KOMETA_PLEXTOKEN=$(cat ${config.age.secrets.kometa-plex-token.path})
+          KOMETA_MDBLISTAPIKEY=$(cat ${config.age.secrets.kometa-mdblist-apikey.path})
+          KOMETA_TMDBAPIKEY=$(cat ${config.age.secrets.kometa-tmdb-apikey.path})
+
           # Always ensure config file exists and is a real file (not symlink)
           echo "Copying config file..."
           ${pkgs.coreutils}/bin/cp ${cfg.configFile} ${cfg.dataDir}/config/config.yml
           ${pkgs.coreutils}/bin/chown ${cfg.user}:${cfg.group} ${cfg.dataDir}/config/config.yml
           echo "Config file copied and permissions set"
-          
+
           echo "Starting Kometa with USER_ID=$USER_ID GROUP_ID=$GROUP_ID"
           echo "Config file exists: $(test -f ${cfg.dataDir}/config/config.yml && echo 'YES' || echo 'NO')"
           echo "Config directory contents:"
           ${pkgs.coreutils}/bin/ls -la ${cfg.dataDir}/config/
-          
+
           # Clean up any existing container
           ${pkgs.docker}/bin/docker rm -f kometa 2>/dev/null || true
-          
+
           # Ensure subdirectories exist in config directory
           mkdir -p ${cfg.dataDir}/config/logs
           mkdir -p ${cfg.dataDir}/config/assets
           ${pkgs.coreutils}/bin/chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}/config
-          
-          echo "Starting Kometa container..."
+
+          echo "Starting Kometa container with secrets..."
           ${pkgs.docker}/bin/docker run --rm --name kometa \
             --network host \
             -v ${cfg.dataDir}/config:/config \
@@ -115,6 +171,10 @@ in {
             -e KOMETA_CONFIG=/config/config.yml \
             -e KOMETA_LOG_LEVEL=INFO \
             -e KOMETA_RUN=True \
+            -e KOMETA_PLEXTOKEN="$KOMETA_PLEXTOKEN" \
+            -e KOMETA_MDBLISTAPIKEY="$KOMETA_MDBLISTAPIKEY" \
+            -e KOMETA_TMDBAPIKEY="$KOMETA_TMDBAPIKEY" \
+            -e KOMETA_PLEXURL="${cfg.plexUrl}" \
             lscr.io/linuxserver/kometa:latest
         '';
         

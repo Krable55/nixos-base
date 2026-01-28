@@ -16,12 +16,35 @@
   custom.media.enable  = true;
   custom.claude-code.enable = true;
 
-  # Agenix secret for Tailscale
-  age.secrets.tailscale-authkey = {
-    file = ../secrets/global/tailscale-authkey.age;
-    owner = "root";
-    group = "root";
-    mode = "600";
+  # Agenix secrets
+  age.secrets = {
+    tailscale-authkey = {
+      file = ../secrets/global/tailscale-authkey.age;
+      owner = "root";
+      group = "root";
+      mode = "600";
+    };
+
+    kometa-plex-token = {
+      file = ../secrets/media-center/kometa/plex-token.age;
+      owner = "kometa";
+      group = "media";
+      mode = "400";
+    };
+
+    kometa-mdblist-apikey = {
+      file = ../secrets/media-center/kometa/mdblist-apikey.age;
+      owner = "kometa";
+      group = "media";
+      mode = "400";
+    };
+
+    kometa-tmdb-apikey = {
+      file = ../secrets/media-center/kometa/tmdb-apikey.age;
+      owner = "kometa";
+      group = "media";
+      mode = "400";
+    };
   };
 
   # Tailscale service configuration

@@ -41,6 +41,11 @@ in
   "jwt-secret"
   "database-key"
 ]) //
+(mkServiceSecrets "media-center" media-center "kometa" [
+  "plex-token"
+  "mdblist-apikey"
+  "tmdb-apikey"
+]) //
 (mkServiceSecrets "trader" trader "supabase" [ 
   "admin-password" 
   "postgres-password"

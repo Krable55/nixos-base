@@ -41,8 +41,8 @@ settings:
 
 # Plex Configuration
 plex:
-  url: http://192.168.50.154:32400
-  token: rqyWME8LpHPoNwLnFyAG
+  url: <<plexurl>>
+  token: <<plextoken>>
   timeout: 60
   db_cache: 
   clean_bundles: false
@@ -50,11 +50,11 @@ plex:
   optimize: false
 
 mdblist:
-  apikey: k0s90j8w4v19sjd3q5zvytl6d
+  apikey: <<mdblistapikey>>
 
 # The Movie Database (TMDb)
 tmdb:
-  apikey: 3ba96efb12fe2aafa920f84d4500dfbe
+  apikey: <<tmdbapikey>>
   language: en
   cache_expiry: 60
   region: US
