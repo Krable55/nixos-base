@@ -7,11 +7,52 @@
     ../modules/media.nix
     ../modules/nfs.nix
     ../modules/backup.nix
+    ../modules/claude-code.nix
+    ../modules/agenix.nix
   ];
 
   # exactly what you had inline:
   networking.hostName = "media-center";
   custom.media.enable  = true;
+  custom.claude-code.enable = true;
+
+  # Agenix secrets
+  age.secrets = {
+    tailscale-authkey = {
+      file = ../secrets/global/tailscale-authkey.age;
+      owner = "root";
+      group = "root";
+      mode = "600";
+    };
+
+    kometa-plex-token = {
+      file = ../secrets/media-center/kometa/plex-token.age;
+      owner = "kometa";
+      group = "media";
+      mode = "400";
+    };
+
+    kometa-mdblist-apikey = {
+      file = ../secrets/media-center/kometa/mdblist-apikey.age;
+      owner = "kometa";
+      group = "media";
+      mode = "400";
+    };
+
+    kometa-tmdb-apikey = {
+      file = ../secrets/media-center/kometa/tmdb-apikey.age;
+      owner = "kometa";
+      group = "media";
+      mode = "400";
+    };
+  };
+
+  # Tailscale service configuration
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+    authKeyFile = config.age.secrets.tailscale-authkey.path;
+  };
 
   # custom.nfs = {
   #   enable = true;

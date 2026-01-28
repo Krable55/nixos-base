@@ -42,7 +42,7 @@ in {
         Type = "simple";
         WorkingDirectory = "/var/lib/wireguard-ui"; # Updated working directory
         EnvironmentFile = "/var/lib/wireguard-ui/.env"; # Update if you have an environment file
-        ExecStart = "${pkgs.wireguard-ui}/bin/wireguard-ui --bind-address '127.0.0.1:5000'"; 
+        ExecStart = "${pkgs.wireguard-ui}/bin/wireguard-ui --bind-address '0.0.0.0:5000'"; 
         Restart = "always";
       };
       wantedBy = [ "multi-user.target" ];

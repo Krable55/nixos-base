@@ -413,6 +413,18 @@ http:
           - main: goobtube.tv
             sans:
               - '*.goobtube.tv'
+    faasd:
+      middlewares:
+        - oauth-errors
+        - oauth-auth-redirect
+      rule: Host(`faas.goobtube.tv`)
+      service: faasd-backend
+      tls:
+        certResolver: leresolver
+        domains:
+          - main: goobtube.tv
+            sans:
+              - '*.goobtube.tv'
     zitadel:
       middlewares:
         - header-forward
