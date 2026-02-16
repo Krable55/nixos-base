@@ -1,0 +1,681 @@
+{
+  "project": "zitadel-auth-setup",
+  "description": "Set up Zitadel as native NixOS service with PostgreSQL and integrate with Traefik ForwardAuth",
+  "created": "2026-02-16",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Secrets Infrastructure",
+      "tasks": [
+        {
+          "id": "1.1",
+          "task": "Get auth host SSH public key",
+          "command": "ssh root@192.168.50.125 cat /etc/ssh/ssh_host_ed25519_key.pub",
+          "status": "completed",
+          "acceptance_criteria": [
+            "SSH connection to 192.168.50.125 succeeds",
+            "ed25519 public key is retrieved (starts with 'ssh-ed25519')",
+            "Key is saved locally for use in task 1.2"
+          ]
+        },
+        {
+          "id": "1.2",
+          "task": "Add auth host key to secrets.nix",
+          "file": "secrets.nix",
+          "status": "completed",
+          "depends_on": ["1.1"],
+          "acceptance_criteria": [
+            "New variable 'auth' is defined with the ed25519 public key",
+            "Variable 'allSystems' includes 'auth' in the list",
+            "File passes nix syntax check: nix-instantiate --parse secrets.nix"
+          ]
+        },
+        {
+          "id": "1.3",
+          "task": "Add zitadel secrets definitions to secrets.nix",
+          "file": "secrets.nix",
+          "secrets": ["master-key", "postgres-password", "postgres-admin-password"],
+          "status": "completed",
+          "depends_on": ["1.2"],
+          "acceptance_criteria": [
+            "mkServiceSecrets call added for 'auth' host with 'zitadel' service",
+            "Three secrets defined: master-key, postgres-password, postgres-admin-password",
+            "Secret paths follow pattern: secrets/auth/zitadel/*.age",
+            "File passes nix syntax check"
+          ]
+        },
+        {
+          "id": "1.4",
+          "task": "Generate and encrypt zitadel master-key",
+          "file": "secrets/auth/zitadel/master-key.age",
+          "status": "completed",
+          "depends_on": ["1.3"],
+          "acceptance_criteria": [
+            "Directory secrets/auth/zitadel/ exists",
+            "master-key.age file is created and encrypted",
+            "Key is exactly 32 bytes (base64 encoded)",
+            "File can be decrypted with: agenix -d secrets/auth/zitadel/master-key.age"
+          ]
+        },
+        {
+          "id": "1.5",
+          "task": "Generate and encrypt zitadel postgres-password",
+          "file": "secrets/auth/zitadel/postgres-password.age",
+          "status": "completed",
+          "depends_on": ["1.3"],
+          "acceptance_criteria": [
+            "postgres-password.age file is created and encrypted",
+            "Password is randomly generated (min 24 characters)",
+            "File can be decrypted with: agenix -d secrets/auth/zitadel/postgres-password.age"
+          ]
+        },
+        {
+          "id": "1.6",
+          "task": "Generate and encrypt zitadel postgres-admin-password",
+          "file": "secrets/auth/zitadel/postgres-admin-password.age",
+          "status": "completed",
+          "depends_on": ["1.3"],
+          "acceptance_criteria": [
+            "postgres-admin-password.age file is created and encrypted",
+            "Password is randomly generated (min 24 characters)",
+            "File can be decrypted with: agenix -d secrets/auth/zitadel/postgres-admin-password.age"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Zitadel Module",
+      "tasks": [
+        {
+          "id": "2.1",
+          "task": "Create modules/zitadel.nix with options definition",
+          "file": "modules/zitadel.nix",
+          "status": "pending",
+          "acceptance_criteria": [
+            "File modules/zitadel.nix exists",
+            "Module defines options.custom.zitadel.enable",
+            "Module defines options for: domain, port, masterKeyFile",
+            "Module defines options.custom.zitadel.postgres with passwordFile and adminPasswordFile",
+            "File passes nix syntax check"
+          ]
+        },
+        {
+          "id": "2.2",
+          "task": "Add PostgreSQL configuration to zitadel module",
+          "file": "modules/zitadel.nix",
+          "status": "pending",
+          "depends_on": ["2.1"],
+          "acceptance_criteria": [
+            "services.postgresql.enable = true when custom.zitadel.enable",
+            "PostgreSQL version is 16 or higher",
+            "Database 'zitadel' is ensured to exist",
+            "User 'zitadel' is ensured to exist with DB ownership",
+            "Authentication configured for local socket and md5"
+          ]
+        },
+        {
+          "id": "2.3",
+          "task": "Add services.zitadel configuration",
+          "file": "modules/zitadel.nix",
+          "status": "pending",
+          "depends_on": ["2.2"],
+          "acceptance_criteria": [
+            "services.zitadel.enable = true when custom.zitadel.enable",
+            "tlsMode set to 'external'",
+            "ExternalDomain set from cfg.domain option",
+            "ExternalSecure = true, ExternalPort = 443",
+            "Database.postgres configured for Unix socket connection",
+            "extraSettingsPaths includes runtime secrets file path",
+            "steps.FirstInstance configures initial admin user"
+          ]
+        },
+        {
+          "id": "2.4",
+          "task": "Add systemd services for secrets generation",
+          "file": "modules/zitadel.nix",
+          "status": "pending",
+          "depends_on": ["2.3"],
+          "acceptance_criteria": [
+            "systemd.services.postgresql-zitadel-password defined",
+            "Service runs after postgresql.service",
+            "Service sets zitadel user password from passwordFile",
+            "systemd.services.zitadel-secrets generates /run/zitadel/secrets.yaml",
+            "secrets.yaml contains Database.postgres.User.Password and Admin.Password",
+            "File permissions set to 600, owned by zitadel user",
+            "zitadel.service depends on both helper services"
+          ]
+        },
+        {
+          "id": "2.5",
+          "task": "Add firewall rules to zitadel module",
+          "file": "modules/zitadel.nix",
+          "status": "pending",
+          "depends_on": ["2.4"],
+          "acceptance_criteria": [
+            "networking.firewall.allowedTCPPorts includes cfg.port (8080)",
+            "Module compiles without errors: nix-instantiate --eval -E '(import ./modules/zitadel.nix)'"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "oauth2-proxy Module",
+      "tasks": [
+        {
+          "id": "3.1",
+          "task": "Create modules/oauth2-proxy.nix with options definition",
+          "file": "modules/oauth2-proxy.nix",
+          "status": "pending",
+          "acceptance_criteria": [
+            "File modules/oauth2-proxy.nix exists",
+            "Module defines options.custom.oauth2-proxy.enable",
+            "Module defines options for: port, zitadelDomain, cookieDomain",
+            "Module defines options for: clientId, clientSecretFile, cookieSecretFile",
+            "File passes nix syntax check"
+          ]
+        },
+        {
+          "id": "3.2",
+          "task": "Add services.oauth2-proxy OIDC configuration",
+          "file": "modules/oauth2-proxy.nix",
+          "status": "pending",
+          "depends_on": ["3.1"],
+          "acceptance_criteria": [
+            "services.oauth2-proxy.enable = true when custom.oauth2-proxy.enable",
+            "provider set to 'oidc'",
+            "clientID set from cfg.clientId",
+            "clientSecretFile set from cfg.clientSecretFile",
+            "cookie.secretFile set from cfg.cookieSecretFile",
+            "cookie.domain set from cfg.cookieDomain",
+            "cookie.secure = true"
+          ]
+        },
+        {
+          "id": "3.3",
+          "task": "Add ForwardAuth-specific extraConfig settings",
+          "file": "modules/oauth2-proxy.nix",
+          "status": "pending",
+          "depends_on": ["3.2"],
+          "acceptance_criteria": [
+            "oidc-issuer-url points to https://{zitadelDomain}",
+            "redirect-url set to https://oauth.goobtube.tv/oauth2/callback",
+            "upstream set to 'static://200' for ForwardAuth mode",
+            "code-challenge-method set to 'S256' for PKCE",
+            "set-xauthrequest = true",
+            "pass-access-token = true",
+            "pass-authorization-header = true",
+            "reverse-proxy = true"
+          ]
+        },
+        {
+          "id": "3.4",
+          "task": "Add firewall rules to oauth2-proxy module",
+          "file": "modules/oauth2-proxy.nix",
+          "status": "pending",
+          "depends_on": ["3.3"],
+          "acceptance_criteria": [
+            "networking.firewall.allowedTCPPorts includes cfg.port (4180)",
+            "Module compiles without errors"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Auth Host Configuration",
+      "tasks": [
+        {
+          "id": "4.1",
+          "task": "Rewrite hosts/auth.nix imports section",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["2.5", "3.4"],
+          "acceptance_criteria": [
+            "Imports include: modulesPath qemu-guest profile",
+            "Imports include: ../modules/agenix.nix",
+            "Imports include: ../modules/create-ssh.nix",
+            "Imports include: ../modules/zitadel.nix",
+            "Imports include: ../modules/oauth2-proxy.nix",
+            "networking.hostName = 'auth'"
+          ]
+        },
+        {
+          "id": "4.2",
+          "task": "Add agenix secrets declarations for zitadel",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["4.1"],
+          "acceptance_criteria": [
+            "age.secrets.zitadel-master-key defined with file path and permissions",
+            "age.secrets.zitadel-postgres-password defined",
+            "age.secrets.zitadel-postgres-admin-password defined",
+            "Owner set appropriately (zitadel for master-key, root for passwords)",
+            "Mode set to '400' for all secrets"
+          ]
+        },
+        {
+          "id": "4.3",
+          "task": "Configure custom.zitadel options",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["4.2"],
+          "acceptance_criteria": [
+            "custom.zitadel.enable = true",
+            "custom.zitadel.domain = 'auth.goobtube.tv'",
+            "custom.zitadel.port = 8080",
+            "custom.zitadel.masterKeyFile references config.age.secrets path",
+            "custom.zitadel.postgres.passwordFile references correct secret",
+            "custom.zitadel.postgres.adminPasswordFile references correct secret"
+          ]
+        },
+        {
+          "id": "4.4",
+          "task": "Add placeholder custom.oauth2-proxy config (disabled initially)",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["4.3"],
+          "acceptance_criteria": [
+            "custom.oauth2-proxy.enable = false (initially disabled)",
+            "custom.oauth2-proxy.zitadelDomain = 'auth.goobtube.tv'",
+            "custom.oauth2-proxy.cookieDomain = '.goobtube.tv'",
+            "custom.oauth2-proxy.clientId = '' (placeholder)",
+            "Comments indicate this will be enabled after Zitadel UI config"
+          ]
+        },
+        {
+          "id": "4.5",
+          "task": "Configure Tailscale and networking",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["4.4"],
+          "acceptance_criteria": [
+            "age.secrets.tailscale-authkey defined",
+            "services.tailscale.enable = true",
+            "services.tailscale.authKeyFile references secret path",
+            "networking.firewall.enable = true",
+            "networking.firewall.allowedTCPPorts includes [22 8080 4180]",
+            "File passes: nix-instantiate --parse hosts/auth.nix"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Traefik Updates",
+      "tasks": [
+        {
+          "id": "5.1",
+          "task": "Fix zitadel-backend IP (192.168.50.244 -> 192.168.50.125)",
+          "file": "modules/traefik.nix",
+          "line": 583,
+          "status": "pending",
+          "acceptance_criteria": [
+            "zitadel-backend URL changed to h2c://192.168.50.125:8080",
+            "passHostHeader remains true",
+            "No other backend IPs changed"
+          ]
+        },
+        {
+          "id": "5.2",
+          "task": "Add oauth2-proxy-backend service",
+          "file": "modules/traefik.nix",
+          "status": "pending",
+          "acceptance_criteria": [
+            "New service 'oauth2-proxy-backend' defined in services block",
+            "loadBalancer.servers contains http://192.168.50.125:4180",
+            "Service placed logically near zitadel-backend"
+          ]
+        },
+        {
+          "id": "5.3",
+          "task": "Uncomment and update oauth-auth-redirect middleware",
+          "file": "modules/traefik.nix",
+          "lines": "91-102",
+          "status": "pending",
+          "acceptance_criteria": [
+            "oauth-auth-redirect middleware is uncommented",
+            "forwardAuth.address = 'http://192.168.50.125:4180/oauth2/auth'",
+            "trustForwardHeader = true",
+            "authResponseHeaders includes: X-Auth-Request-User, X-Auth-Request-Email, X-Auth-Request-Access-Token, Authorization"
+          ]
+        },
+        {
+          "id": "5.4",
+          "task": "Uncomment and update oauth-errors middleware",
+          "file": "modules/traefik.nix",
+          "lines": "104-110",
+          "status": "pending",
+          "acceptance_criteria": [
+            "oauth-errors middleware is uncommented",
+            "errors.service = 'oauth2-proxy-backend'",
+            "errors.query = '/oauth2/start?rd={scheme}://{host}{uri}'",
+            "errors.status = ['401-403']"
+          ]
+        },
+        {
+          "id": "5.5",
+          "task": "Uncomment header-forward middleware",
+          "file": "modules/traefik.nix",
+          "lines": "73-81",
+          "status": "pending",
+          "acceptance_criteria": [
+            "header-forward middleware is uncommented",
+            "X-Forwarded-Host = 'auth.goobtube.tv'",
+            "X-Forwarded-Proto = 'https'"
+          ]
+        },
+        {
+          "id": "5.6",
+          "task": "Add oauth2-proxy router",
+          "file": "modules/traefik.nix",
+          "status": "pending",
+          "acceptance_criteria": [
+            "New router 'oauth2-proxy' defined in routers block",
+            "rule = \"Host(`oauth.goobtube.tv`) && PathPrefix(`/oauth2`)\"",
+            "service = 'oauth2-proxy-backend'",
+            "TLS configured with certResolver = 'leresolver'",
+            "File passes nix syntax check"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "First Deployment (Zitadel Only)",
+      "tasks": [
+        {
+          "id": "6.1",
+          "task": "Deploy auth host with colmena",
+          "command": "colmena apply --on @auth",
+          "status": "pending",
+          "depends_on": ["4.5", "1.6"],
+          "acceptance_criteria": [
+            "colmena build succeeds without errors",
+            "colmena apply completes successfully",
+            "No activation errors reported"
+          ]
+        },
+        {
+          "id": "6.2",
+          "task": "Verify Zitadel service started",
+          "command": "ssh root@192.168.50.125 journalctl -u zitadel --no-pager | tail -50",
+          "status": "pending",
+          "depends_on": ["6.1"],
+          "acceptance_criteria": [
+            "zitadel.service is active (running)",
+            "Logs show 'server is listening' or similar startup message",
+            "No critical errors in journal",
+            "Port 8080 is listening: ss -tlnp | grep 8080"
+          ]
+        },
+        {
+          "id": "6.3",
+          "task": "Verify PostgreSQL running",
+          "command": "ssh root@192.168.50.125 systemctl status postgresql",
+          "status": "pending",
+          "depends_on": ["6.1"],
+          "acceptance_criteria": [
+            "postgresql.service is active (running)",
+            "Database 'zitadel' exists: sudo -u postgres psql -c '\\l' | grep zitadel",
+            "User 'zitadel' can connect: sudo -u postgres psql -c '\\du' | grep zitadel"
+          ]
+        },
+        {
+          "id": "6.4",
+          "task": "Deploy networking host (Traefik updates)",
+          "command": "colmena apply --on @networking",
+          "status": "pending",
+          "depends_on": ["5.6"],
+          "acceptance_criteria": [
+            "colmena apply completes successfully",
+            "traefik.service restarted without errors",
+            "No certificate errors in Traefik logs"
+          ]
+        },
+        {
+          "id": "6.5",
+          "task": "Test Zitadel accessible at https://auth.goobtube.tv",
+          "status": "pending",
+          "depends_on": ["6.2", "6.4"],
+          "acceptance_criteria": [
+            "curl -k https://auth.goobtube.tv returns 200 or redirect to login",
+            "Browser can load https://auth.goobtube.tv",
+            "TLS certificate is valid (Let's Encrypt)",
+            "Zitadel login page is displayed"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "Zitadel UI Configuration",
+      "manual": true,
+      "tasks": [
+        {
+          "id": "7.1",
+          "task": "Login to Zitadel admin UI",
+          "url": "https://auth.goobtube.tv",
+          "status": "pending",
+          "depends_on": ["6.5"],
+          "acceptance_criteria": [
+            "Login page loads successfully",
+            "Can login with admin user from FirstInstance config",
+            "Dashboard is accessible after login"
+          ]
+        },
+        {
+          "id": "7.2",
+          "task": "Change default admin password",
+          "status": "pending",
+          "depends_on": ["7.1"],
+          "acceptance_criteria": [
+            "Navigate to user settings",
+            "Password changed to secure value",
+            "New password stored in password manager",
+            "Can logout and login with new password"
+          ]
+        },
+        {
+          "id": "7.3",
+          "task": "Create project for oauth2-proxy",
+          "status": "pending",
+          "depends_on": ["7.2"],
+          "acceptance_criteria": [
+            "Navigate to Projects section",
+            "New project created with name 'oauth2-proxy' or 'traefik-auth'",
+            "Project is active and visible in project list"
+          ]
+        },
+        {
+          "id": "7.4",
+          "task": "Create Web application (Authorization Code + PKCE)",
+          "config": {
+            "redirect_uri": "https://oauth.goobtube.tv/oauth2/callback",
+            "post_logout_uri": "https://goobtube.tv"
+          },
+          "status": "pending",
+          "depends_on": ["7.3"],
+          "acceptance_criteria": [
+            "Application type is 'Web'",
+            "Auth method is 'Code' (Authorization Code)",
+            "PKCE is enabled (if separate option)",
+            "Redirect URI exactly: https://oauth.goobtube.tv/oauth2/callback",
+            "Post logout redirect URI set",
+            "Application is active"
+          ]
+        },
+        {
+          "id": "7.5",
+          "task": "Copy Client ID and Client Secret",
+          "status": "pending",
+          "depends_on": ["7.4"],
+          "acceptance_criteria": [
+            "Client ID copied (format: numbers like '12345678901234567')",
+            "Client Secret generated and copied",
+            "Both values saved securely (password manager or temp file)",
+            "Values ready for use in task 8.2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "oauth2-proxy Secrets",
+      "tasks": [
+        {
+          "id": "8.1",
+          "task": "Add oauth2-proxy secrets definitions to secrets.nix",
+          "file": "secrets.nix",
+          "secrets": ["client-secret", "cookie-secret"],
+          "status": "pending",
+          "depends_on": ["7.5"],
+          "acceptance_criteria": [
+            "mkServiceSecrets call added for 'auth' host with 'oauth2-proxy' service",
+            "Two secrets defined: client-secret, cookie-secret",
+            "Secret paths: secrets/auth/oauth2-proxy/*.age",
+            "File passes nix syntax check"
+          ]
+        },
+        {
+          "id": "8.2",
+          "task": "Create oauth2-proxy client-secret from Zitadel",
+          "file": "secrets/auth/oauth2-proxy/client-secret.age",
+          "status": "pending",
+          "depends_on": ["8.1"],
+          "acceptance_criteria": [
+            "Directory secrets/auth/oauth2-proxy/ exists",
+            "client-secret.age contains the Client Secret from task 7.5",
+            "File can be decrypted: agenix -d secrets/auth/oauth2-proxy/client-secret.age"
+          ]
+        },
+        {
+          "id": "8.3",
+          "task": "Generate oauth2-proxy cookie-secret",
+          "file": "secrets/auth/oauth2-proxy/cookie-secret.age",
+          "status": "pending",
+          "depends_on": ["8.1"],
+          "acceptance_criteria": [
+            "cookie-secret.age created with random 32-byte value",
+            "Generated with: openssl rand -base64 32",
+            "File can be decrypted: agenix -d secrets/auth/oauth2-proxy/cookie-secret.age"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-9",
+      "name": "Enable oauth2-proxy",
+      "tasks": [
+        {
+          "id": "9.1",
+          "task": "Add oauth2-proxy agenix secrets to hosts/auth.nix",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["8.3"],
+          "acceptance_criteria": [
+            "age.secrets.oauth2-proxy-client-secret defined",
+            "age.secrets.oauth2-proxy-cookie-secret defined",
+            "File paths point to secrets/auth/oauth2-proxy/*.age",
+            "Permissions set to mode '400'"
+          ]
+        },
+        {
+          "id": "9.2",
+          "task": "Set clientId in custom.oauth2-proxy config",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["9.1"],
+          "acceptance_criteria": [
+            "custom.oauth2-proxy.clientId set to Client ID from task 7.5",
+            "clientSecretFile references config.age.secrets.oauth2-proxy-client-secret.path",
+            "cookieSecretFile references config.age.secrets.oauth2-proxy-cookie-secret.path"
+          ]
+        },
+        {
+          "id": "9.3",
+          "task": "Enable custom.oauth2-proxy",
+          "file": "hosts/auth.nix",
+          "status": "pending",
+          "depends_on": ["9.2"],
+          "acceptance_criteria": [
+            "custom.oauth2-proxy.enable = true",
+            "All required options have values (not empty strings)",
+            "File passes nix syntax check"
+          ]
+        },
+        {
+          "id": "9.4",
+          "task": "Deploy auth host with oauth2-proxy",
+          "command": "colmena apply --on @auth",
+          "status": "pending",
+          "depends_on": ["9.3"],
+          "acceptance_criteria": [
+            "colmena apply completes successfully",
+            "oauth2-proxy.service is active (running)",
+            "Port 4180 is listening: ss -tlnp | grep 4180",
+            "No errors in oauth2-proxy logs: journalctl -u oauth2-proxy"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-10",
+      "name": "Verification",
+      "tasks": [
+        {
+          "id": "10.1",
+          "task": "Test Zitadel health endpoint",
+          "command": "curl -k https://auth.goobtube.tv/debug/healthz",
+          "status": "pending",
+          "depends_on": ["9.4"],
+          "acceptance_criteria": [
+            "HTTP 200 response",
+            "Response indicates healthy status",
+            "No TLS errors"
+          ]
+        },
+        {
+          "id": "10.2",
+          "task": "Test oauth2-proxy ping",
+          "command": "curl http://192.168.50.125:4180/ping",
+          "status": "pending",
+          "depends_on": ["9.4"],
+          "acceptance_criteria": [
+            "HTTP 200 response",
+            "Response body is 'OK' or similar",
+            "Connection succeeds without timeout"
+          ]
+        },
+        {
+          "id": "10.3",
+          "task": "Test auth redirect on protected service",
+          "url": "https://whoami.goobtube.tv",
+          "expected": "Redirect to Zitadel login",
+          "status": "pending",
+          "depends_on": ["10.2"],
+          "acceptance_criteria": [
+            "Accessing whoami.goobtube.tv without auth redirects to oauth.goobtube.tv",
+            "oauth.goobtube.tv redirects to auth.goobtube.tv login",
+            "Zitadel login page is displayed",
+            "No infinite redirect loops"
+          ]
+        },
+        {
+          "id": "10.4",
+          "task": "Verify X-Auth-Request headers after login",
+          "status": "pending",
+          "depends_on": ["10.3"],
+          "acceptance_criteria": [
+            "Login to Zitadel with admin account",
+            "Redirect back to whoami.goobtube.tv succeeds",
+            "whoami service displays X-Auth-Request-User header",
+            "X-Auth-Request-Email header contains user email",
+            "Subsequent requests to protected services work without re-login (SSO)"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -9,9 +9,10 @@ let
   networking = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINbKk9Z8Wdugwemk3Q3peHu5a56ow1LroxQslLp+xGCA";
   powerball = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDWEg9z+P1KtpqyXgAceCfAp6mbHmG0o/P2GGu4YZUsw";
   trader = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMzlakBngVBQTzqOkj+N+81Il3xpbtPnBqC9Iu+Ckozd";
+  auth = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILHQeLFj0zocOuCwz9tAd0NrumFcSH8btPrlTCAVRg+I";
 
   # Define which keys can edit/decrypt which secrets
-  allSystems = [ media-center builder networking powerball trader ];
+  allSystems = [ media-center builder networking powerball trader auth ];
   allUsers = [ kyle ];
   
   # Helper function to create secrets for a specific service on a host
@@ -46,14 +47,19 @@ in
   "mdblist-apikey"
   "tmdb-apikey"
 ]) //
-(mkServiceSecrets "trader" trader "supabase" [ 
-  "admin-password" 
+(mkServiceSecrets "trader" trader "supabase" [
+  "admin-password"
   "postgres-password"
   "jwt-secret"
-  "anon-key" 
+  "anon-key"
   "service-role-key"
   "secret-key-base"
   "vault-enc-key"
+]) //
+(mkServiceSecrets "auth" auth "zitadel" [
+  "master-key"
+  "postgres-password"
+  "postgres-admin-password"
 ]) //
 {
   # Cross-host secrets (needed for Nuclio functions on networking host)

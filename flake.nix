@@ -131,6 +131,16 @@
         imports = [ ./hosts/networking.nix ];
       };
 
+      auth = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.125";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags = [ "auth" ];
+        };
+        imports = [ ./hosts/auth.nix ];
+      };
+      
       powerball = { config, pkgs, lib, ... }: {
         deployment = {
           targetHost    = "192.168.50.119";

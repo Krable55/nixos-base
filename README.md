@@ -90,6 +90,11 @@ Use the `add-service-secrets.sh` script to add multiple secrets at once:
 ### Editing Existing Secrets
 
 To edit an existing secret:
+# Edit 
+```
+agenix -i ~/.ssh/id_ed25519 secrets/media-center/kometa/plex-token.age
+```
+
 ```bash
 agenix -e secrets/media-center/kometa/plex-token.age
 ```
