@@ -10,9 +10,10 @@ let
   powerball = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDWEg9z+P1KtpqyXgAceCfAp6mbHmG0o/P2GGu4YZUsw";
   trader = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMzlakBngVBQTzqOkj+N+81Il3xpbtPnBqC9Iu+Ckozd";
   auth = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILHQeLFj0zocOuCwz9tAd0NrumFcSH8btPrlTCAVRg+I";
+  lore = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC1xjp0deXugTcgPgnSvGejShvh9uLGtz5TD8PKmNI/a";
 
   # Define which keys can edit/decrypt which secrets
-  allSystems = [ media-center builder networking powerball trader auth ];
+  allSystems = [ media-center builder networking powerball trader auth lore ];
   allUsers = [ kyle ];
   
   # Helper function to create secrets for a specific service on a host
@@ -60,6 +61,10 @@ in
   "master-key"
   "postgres-password"
   "postgres-admin-password"
+]) //
+(mkServiceSecrets "lore" lore "lore" [
+  "tls-cert"
+  "tls-key"
 ]) //
 {
   # Cross-host secrets (needed for Nuclio functions on networking host)

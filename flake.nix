@@ -46,6 +46,7 @@
       k3s             = import ./modules/k3s.nix;
       nuclio          = import ./modules/nuclio;
       nuclio-functions = import ./modules/nuclio/functions.nix;
+      lore            = import ./modules/lore.nix;
     };
 
     # For VM image building (e.g., `nix build`)
@@ -159,6 +160,16 @@
           tags = [ "trader" ];
         };
         imports = [ ./hosts/trader.nix ];
+      };
+
+      lore = { config, pkgs, lib, ... }: {
+        deployment = {
+          targetHost    = "192.168.50.36";
+          targetUser    = "root";
+          buildOnTarget = true;
+          tags          = [ "lore" ];
+        };
+        imports = [ ./hosts/lore.nix ];
       };
     };
 
