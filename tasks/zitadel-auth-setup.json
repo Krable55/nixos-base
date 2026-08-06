@@ -493,8 +493,9 @@
           "id": "7.1",
           "task": "Login to Zitadel admin UI",
           "url": "https://auth.goobtube.tv",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["6.5"],
+          "note": "Login initially prompted for a code with no clear source; ruled out is_email_verified (true) and force_mfa (false) as causes via direct DB query before it resolved on its own -- root cause still unknown, but no longer blocking. Correct login name is admin@zitadel.auth.goobtube.tv, not 'admin' or 'admin@auth.goobtube.tv' -- FirstInstance didn't set Org.Name, so Zitadel defaulted the org (and thus the login-name domain) to 'zitadel'. Separately, user was instructed to disable Instance > Login Behavior and Security > Allow registration in Console, since AllowRegister defaults to true and modules/zitadel.nix's steps.FirstInstance never set it (steps only apply at first-instance setup, so this has to be a Console change now, not a Nix one, for this already-initialized instance).",
           "acceptance_criteria": [
             "Login page loads successfully",
             "Can login with admin user from FirstInstance config",
