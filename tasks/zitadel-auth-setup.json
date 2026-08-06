@@ -333,7 +333,8 @@
           "task": "Fix zitadel-backend IP (192.168.50.244 -> 192.168.50.125)",
           "file": "modules/traefik.nix",
           "line": 583,
-          "status": "pending",
+          "status": "completed",
+          "note": "Verified with an isolated scratch nixosSystem eval (config.system.build.toplevel.drvPath) rather than a real colmena build --on @networking, because that build currently fails for an unrelated pre-existing reason: modules/claude-code.nix (imported by hosts/networking.nix, last touched in commit c51fd09, well before this work) references pkgs.nodePackages.npm, which nixpkgs has since removed. Not fixed here -- out of scope for this task and worth flagging to the user separately.",
           "acceptance_criteria": [
             "zitadel-backend URL changed to h2c://192.168.50.125:8080",
             "passHostHeader remains true",
@@ -344,7 +345,8 @@
           "id": "5.2",
           "task": "Add oauth2-proxy-backend service",
           "file": "modules/traefik.nix",
-          "status": "pending",
+          "status": "completed",
+          "note": "Named distinctly from the pre-existing 'oauth-backend' service (http://192.168.50.154:4180), which is a separate, unrelated oauth2-proxy deployment not managed by this flake/colmena hive -- left untouched.",
           "acceptance_criteria": [
             "New service 'oauth2-proxy-backend' defined in services block",
             "loadBalancer.servers contains http://192.168.50.125:4180",
@@ -357,6 +359,8 @@
           "file": "modules/traefik.nix",
           "lines": "91-102",
           "status": "pending",
+          "blocked_on": ["9.3"],
+          "note": "Deliberately NOT done yet, despite being straightforward to write -- doing it now would break production. ~20 already-existing routers (audiobooks, faasd-portal, and 18 others) already list this middleware by name in their `middlewares` array, so as soon as it's uncommented, every one of those routes starts doing ForwardAuth against http://192.168.50.125:4180/oauth2/auth. But custom.oauth2-proxy.enable stays false on the auth host until task 9.3, and Phase 7 in between is manual UI clicking that can take days. Uncommenting now would mean connection-refused/502 on all ~20 routes for that entire window (oauth-errors below only catches 401-403, not 502, so it wouldn't even redirect to a login page). The corrected content (real address, real header list, and dropping the addAuthCookiesToResponse placeholder since the real oauth2-proxy cookie is _oauth2_proxy, not Session-Cookie/State-Cookie) is written into the comment block in modules/traefik.nix so this is a single find-and-uncomment when task 9.3 flips enable = true -- do both in the same change, then deploy auth and networking together.",
           "acceptance_criteria": [
             "oauth-auth-redirect middleware is uncommented",
             "forwardAuth.address = 'http://192.168.50.125:4180/oauth2/auth'",
@@ -370,6 +374,8 @@
           "file": "modules/traefik.nix",
           "lines": "104-110",
           "status": "pending",
+          "blocked_on": ["9.3"],
+          "note": "Same reasoning and same commit as 5.3 -- see that task's note. Corrected content (errors.service = 'oauth2-proxy-backend', matching the renamed service from 5.2) is already written into the comment block.",
           "acceptance_criteria": [
             "oauth-errors middleware is uncommented",
             "errors.service = 'oauth2-proxy-backend'",
@@ -382,7 +388,8 @@
           "task": "Uncomment header-forward middleware",
           "file": "modules/traefik.nix",
           "lines": "73-81",
-          "status": "pending",
+          "status": "completed",
+          "note": "Safe to do now (unlike 5.3/5.4): only the 'zitadel' router (auth.goobtube.tv) references this, and that router isn't deployed/reachable until Phase 6 anyway. Was actually necessary regardless of oauth2-proxy readiness -- Zitadel's own login page needs this middleware to be real, not commented out.",
           "acceptance_criteria": [
             "header-forward middleware is uncommented",
             "X-Forwarded-Host = 'auth.goobtube.tv'",
@@ -393,7 +400,8 @@
           "id": "5.6",
           "task": "Add oauth2-proxy router",
           "file": "modules/traefik.nix",
-          "status": "pending",
+          "status": "completed",
+          "note": "Named distinctly from the pre-existing 'oauth2-proxy-route' router (Host(oauth.goobtube.tv) && PathPrefix(/), service oauth-backend) which belongs to the same unrelated legacy deployment as 'oauth-backend' -- left untouched. Added an explicit priority = 100 so this route can't lose PathPrefix precedence to that other router (or a future edit of either rule) even though its longer rule string already wins under Traefik's default length-based priority. Verified with an isolated scratch nixosSystem eval; a real colmena build --on @networking isn't possible right now due to the unrelated claude-code.nix/nodePackages breakage noted on task 5.1.",
           "acceptance_criteria": [
             "New router 'oauth2-proxy' defined in routers block",
             "rule = \"Host(`oauth.goobtube.tv`) && PathPrefix(`/oauth2`)\"",

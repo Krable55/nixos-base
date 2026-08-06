@@ -70,15 +70,15 @@ in
           #   };
           # };
 
-          # "header-forward" = {
-          #   headers = {
-          #     customRequestHeaders = {
-          #       "Set-Cookie"        = "Secure; SameSite=None";
-          #       "X-Forwarded-Host"  = "auth.goobtube.tv";
-          #       "X-Forwarded-Proto" = "https";
-          #     };
-          #   };
-          # };
+          "header-forward" = {
+            headers = {
+              customRequestHeaders = {
+                "Set-Cookie"        = "Secure; SameSite=None";
+                "X-Forwarded-Host"  = "auth.goobtube.tv";
+                "X-Forwarded-Proto" = "https";
+              };
+            };
+          };
 
           # websocket = {
           #   headers = {
@@ -88,23 +88,44 @@ in
           #   };
           # };
 
+          # Deliberately left commented out. ~20 routers below already list
+          # this in their middlewares (dead reference until this is
+          # uncommented -- Traefik just errors those routers currently).
+          # Do NOT uncomment until custom.oauth2-proxy.enable = true on the
+          # auth host (task 9.3) actually has something listening on
+          # 4180/oauth2/auth -- uncommenting before then turns every one of
+          # those ~20 routers into a hard ForwardAuth failure (connection
+          # refused, and oauth-errors below only catches 401-403, not 502)
+          # for the entire Phase 6-9 window, which includes the manual
+          # Phase 7 UI setup that can take days. Uncomment this and
+          # oauth-errors in the same change that flips enable = true.
+          #
+          # Content corrected from the original placeholder for the actual
+          # native oauth2-proxy on the auth host (Phase 2-4), not the old
+          # placeholder "oauth2-proxy" hostname:
           # "oauth-auth-redirect" = {
           #   forwardAuth = {
-          #     address                    = "http://oauth2-proxy:4180";
-          #     addAuthCookiesToResponse   = [ "Session-Cookie" "State-Cookie" ];
-          #     authResponseHeaders        = [
+          #     address             = "http://192.168.50.125:4180/oauth2/auth";
+          #     authResponseHeaders = [
+          #       "X-Auth-Request-User"
+          #       "X-Auth-Request-Email"
           #       "X-Auth-Request-Access-Token"
-          #       "X-Forwarded-Uri"
           #       "Authorization"
           #     ];
-          #     trustForwardHeader         = true;
+          #     trustForwardHeader  = true;
           #   };
           # };
+          # (addAuthCookiesToResponse dropped: the original listed
+          # "Session-Cookie"/"State-Cookie" placeholders, but the real
+          # oauth2-proxy module never overrides cookie.name, so the actual
+          # cookie is "_oauth2_proxy". Forwarding the wrong cookie name here
+          # is exactly what causes the infinite-redirect-loop symptom Phase
+          # 10.3 warns about, since the session would never persist.)
 
           # "oauth-errors" = {
           #   errors = {
           #     query   = "/oauth2/start?rd={scheme}://{host}{uri}";
-          #     service = "oauth-backend";
+          #     service = "oauth2-proxy-backend";
           #     status  = [ "401-403" ];
           #   };
           # };
@@ -269,6 +290,24 @@ in
             middlewares = [ "auth-headers" ];
             tls = {
               certResolver = "default";
+              domains = [ { main = "goobtube.tv"; sans = [ "*.goobtube.tv" ]; } ];
+            };
+          };
+
+          # Distinct from "oauth2-proxy-route" above, which is an unrelated,
+          # separately managed oauth2-proxy on 192.168.50.154 -- this one is
+          # the native oauth2-proxy on the auth host (192.168.50.125) that
+          # Zitadel's oauth-auth-redirect ForwardAuth middleware calls into.
+          # Explicit priority so this can't lose PathPrefix precedence to
+          # "oauth2-proxy-route" (or a future edit of either rule) even
+          # though its longer rule string already wins under Traefik's
+          # default length-based priority.
+          "oauth2-proxy" = {
+            rule       = "Host(`oauth.goobtube.tv`) && PathPrefix(`/oauth2`)";
+            service    = "oauth2-proxy-backend";
+            priority   = 100;
+            tls = {
+              certResolver = "leresolver";
               domains = [ { main = "goobtube.tv"; sans = [ "*.goobtube.tv" ]; } ];
             };
           };
@@ -580,7 +619,13 @@ in
           "zitadel-backend" = {
             loadBalancer = {
               passHostHeader = true;
-              servers        = [ { url = "h2c://192.168.50.244:8080"; } ];
+              servers        = [ { url = "h2c://192.168.50.125:8080"; } ];
+            };
+          };
+
+          "oauth2-proxy-backend" = {
+            loadBalancer = {
+              servers = [ { url = "http://192.168.50.125:4180"; } ];
             };
           };
 
