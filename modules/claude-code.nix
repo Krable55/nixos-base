@@ -21,7 +21,7 @@ in {
           pname = "claude-code";
           version = "latest";
           
-          nativeBuildInputs = [ final.nodejs_22 final.nodePackages.npm ];
+          nativeBuildInputs = [ final.nodejs_22 ];
           
           dontUnpack = true;
           dontBuild = true;
@@ -48,7 +48,6 @@ EOF
     # Install Node.js and Claude Code CLI
     environment.systemPackages = with pkgs; [
       pkgs.${cfg.nodeVersion}
-      nodePackages.npm
       claude-code
     ];
   };
