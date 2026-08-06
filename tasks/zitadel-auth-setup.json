@@ -182,7 +182,8 @@
           "id": "3.1",
           "task": "Create modules/oauth2-proxy.nix with options definition",
           "file": "modules/oauth2-proxy.nix",
-          "status": "pending",
+          "status": "completed",
+          "note": "Added a redirectUrl option too (not in the original scope), holding the full literal redirect URL rather than deriving it inside the module -- same shape as zitadel.nix taking domain verbatim instead of assembling it from parts.",
           "acceptance_criteria": [
             "File modules/oauth2-proxy.nix exists",
             "Module defines options.custom.oauth2-proxy.enable",
@@ -195,8 +196,9 @@
           "id": "3.2",
           "task": "Add services.oauth2-proxy OIDC configuration",
           "file": "modules/oauth2-proxy.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["3.1"],
+          "note": "clientSecretFile/cookieSecretFile as options on the upstream module don't exist -- checked nixos/modules/services/security/oauth2-proxy.nix at this flake's pinned nixpkgs rev directly. services.oauth2-proxy.clientSecret and cookie.secret are plain nullOr str that get baked into the generated ExecStart command line (Nix store + ps aux visible); there's no *File variant. Used the module's own documented escape hatch: a systemd.services.oauth2-proxy-env helper unit writes OAUTH2_PROXY_CLIENT_SECRET/OAUTH2_PROXY_COOKIE_SECRET into a runtime-only /run/oauth2-proxy/env file, wired in via services.oauth2-proxy.keyFile (which upstream maps straight to systemd's EnvironmentFile=). Confirmed with a scratch nixosSystem eval that the rendered ExecStart contains neither client-secret nor cookie-secret, and EnvironmentFile=/run/oauth2-proxy/env is set. clientId is NOT treated as secret (matches Phase 9.2's plan to set it as a literal string in hosts/auth.nix), so it's passed directly as services.oauth2-proxy.clientID, not through the env file.",
           "acceptance_criteria": [
             "services.oauth2-proxy.enable = true when custom.oauth2-proxy.enable",
             "provider set to 'oidc'",
@@ -211,8 +213,9 @@
           "id": "3.3",
           "task": "Add ForwardAuth-specific extraConfig settings",
           "file": "modules/oauth2-proxy.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["3.2"],
+          "note": "code-challenge-method and pass-authorization-header aren't declared options on the upstream module (checked the source directly) -- both set via extraConfig, which the module merges as raw hyphenated flags. Two gotchas this task list didn't anticipate, both confirmed against primary sources: (1) upstream's passBasicAuth defaults to true and emits --pass-basic-auth=true, setting an empty Basic Authorization header that would clobber the Bearer token pass-authorization-header is meant to forward -- explicitly set passBasicAuth = false. (2) oauth2-proxy 7.9.0 (the version pinned in nixpkgs here) refuses to start at all without email-domain, authenticated-emails-file, or an htpasswd file configured (pkg/validation/options.go: 'missing setting for email validation') -- hardcoded email.domains = [ \"*\" ] since Zitadel is the actual authorization boundary here, not oauth2-proxy.",
           "acceptance_criteria": [
             "oidc-issuer-url points to https://{zitadelDomain}",
             "redirect-url set to https://oauth.goobtube.tv/oauth2/callback",
@@ -228,8 +231,9 @@
           "id": "3.4",
           "task": "Add firewall rules to oauth2-proxy module",
           "file": "modules/oauth2-proxy.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["3.3"],
+          "note": "Also fixed httpAddress, which this task list didn't cover and which would have silently broken Phase 6.5/10.3: upstream defaults httpAddress to http://127.0.0.1:4180 (loopback-only), but Traefik reaches oauth2-proxy across the LAN from a different host (192.168.50.125:4180 per Phase 5), so it must bind 0.0.0.0. Set httpAddress = \"http://0.0.0.0:${cfg.port}\" alongside the firewall rule. Verified with a scratch nixosSystem eval (config.system.build.toplevel.drvPath resolved cleanly, same technique used for Phase 2) rather than the suggested --eval on a bare function, which proves nothing.",
           "acceptance_criteria": [
             "networking.firewall.allowedTCPPorts includes cfg.port (4180)",
             "Module compiles without errors"

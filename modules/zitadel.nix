@@ -68,8 +68,11 @@ in {
       before = [ "zitadel.service" ];
       wantedBy = [ "zitadel.service" ];
       serviceConfig = {
+        # No RemainAfterExit: this must actually re-run (and re-ALTER the
+        # passwords) every time zitadel.service is (re)started, e.g. after a
+        # secret rotation. With RemainAfterExit the unit stays "active
+        # (exited)" across a colmena apply and its start job becomes a no-op.
         Type = "oneshot";
-        RemainAfterExit = true;
         User = "postgres";
       };
       script = ''
@@ -87,10 +90,8 @@ in {
       description = "Generate Zitadel runtime secrets and bootstrap steps files";
       before = [ "zitadel.service" ];
       wantedBy = [ "zitadel.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
+      # No RemainAfterExit -- see postgresql-zitadel-password above.
+      serviceConfig.Type = "oneshot";
       script = ''
         umask 077
         install -d -o zitadel -g zitadel -m 0750 /run/zitadel
