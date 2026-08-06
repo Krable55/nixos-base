@@ -249,8 +249,9 @@
           "id": "4.1",
           "task": "Rewrite hosts/auth.nix imports section",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["2.5", "3.4"],
+          "note": "Replaced the old dead Vault/sops-nix OIDC placeholder wholesale. Verified for real this time (not a scratch nixosSystem, the actual host wiring through base.nix + colmenaHive): `colmena build --on @auth` completed end-to-end and produced a full system closure. Did not import ../modules/colmena.nix -- checked hosts/media-center.nix (the closest analogous plain-application host) and it doesn't import it either; that module is opt-in per-host (custom.colmena.enable), not a required import.",
           "acceptance_criteria": [
             "Imports include: modulesPath qemu-guest profile",
             "Imports include: ../modules/agenix.nix",
@@ -264,8 +265,9 @@
           "id": "4.2",
           "task": "Add agenix secrets declarations for zitadel",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["4.1"],
+          "note": "Deviated from 'root for passwords': owner is 'postgres' (not root) for zitadel-postgres-password and zitadel-postgres-admin-password, because modules/zitadel.nix's postgresql-zitadel-password unit runs its ALTER USER script as User = \"postgres\" and needs to read those files directly -- root reading a 0400 postgres-owned file is unaffected since root bypasses unix permission checks anyway (the root-run zitadel-secrets unit still reads them fine). Also added a 4th secret (zitadel-admin-password, owner root, since only the root-run zitadel-secrets unit reads it) matching the admin-password.age added in Phase 2/1.7.",
           "acceptance_criteria": [
             "age.secrets.zitadel-master-key defined with file path and permissions",
             "age.secrets.zitadel-postgres-password defined",
@@ -278,7 +280,7 @@
           "id": "4.3",
           "task": "Configure custom.zitadel options",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["4.2"],
           "acceptance_criteria": [
             "custom.zitadel.enable = true",
@@ -293,8 +295,9 @@
           "id": "4.4",
           "task": "Add placeholder custom.oauth2-proxy config (disabled initially)",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["4.3"],
+          "note": "clientSecretFile/cookieSecretFile are intentionally left unset (not just empty strings) since the module lazily evaluates them only inside a mkIf cfg.enable block, and enable = false here -- setting them to a nonexistent secret path would be pointless and setting them to a real one is impossible since Phase 8 hasn't created those secrets yet.",
           "acceptance_criteria": [
             "custom.oauth2-proxy.enable = false (initially disabled)",
             "custom.oauth2-proxy.zitadelDomain = 'auth.goobtube.tv'",
@@ -307,8 +310,9 @@
           "id": "4.5",
           "task": "Configure Tailscale and networking",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["4.4"],
+          "note": "Verified with a real colmena build --on @auth (produced a full system closure), stronger than the suggested nix-instantiate --parse.",
           "acceptance_criteria": [
             "age.secrets.tailscale-authkey defined",
             "services.tailscale.enable = true",

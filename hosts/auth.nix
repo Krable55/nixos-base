@@ -1,61 +1,88 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, modulesPath, ... }:
 
-let
-  # Zitadel OIDC discovery URL
-  discovery = "https://zitadel.example.com/.well-known/openid-configuration";
-  clientId   = "my-nixos-client";
-in {
-  # 1) Vault agent auto‑auth via Zitadel OIDC
-  services.vault = {
-    enable    = true;
-    package   = pkgs.vault;
-    agentConfig = {
-      autoAuth = {
-        method = {
-          type       = "oidc";
-          mountPath  = "auth/oidc";
-          config = {
-            oidc_discovery_url = discovery;
-            client_id          = clientId;
-            client_secret_file = "/etc/zitadel/client-secret";
-            role               = "nixos-role";
-          };
-        };
-        sink = {
-          type = "file";
-          config = { path = "/run/vault/token"; };
-        };
-      };
-      cache = { use_auto_auth_token = true; };
+{
+  imports = [
+    (modulesPath + "/profiles/qemu-guest.nix")
+    ../modules/agenix.nix
+    ../modules/create-ssh.nix
+    ../modules/zitadel.nix
+    ../modules/oauth2-proxy.nix
+  ];
+
+  networking.hostName = "auth";
+
+  age.secrets = {
+    tailscale-authkey = {
+      file  = ../secrets/global/tailscale-authkey.age;
+      owner = "root";
+      group = "root";
+      mode  = "600";
+    };
+
+    zitadel-master-key = {
+      file  = ../secrets/auth/zitadel/master-key.age;
+      owner = "zitadel";
+      group = "zitadel";
+      mode  = "400";
+    };
+
+    # Read by the postgresql-zitadel-password unit, which runs as the
+    # "postgres" system user (see modules/zitadel.nix).
+    zitadel-postgres-password = {
+      file  = ../secrets/auth/zitadel/postgres-password.age;
+      owner = "postgres";
+      group = "postgres";
+      mode  = "400";
+    };
+
+    zitadel-postgres-admin-password = {
+      file  = ../secrets/auth/zitadel/postgres-admin-password.age;
+      owner = "postgres";
+      group = "postgres";
+      mode  = "400";
+    };
+
+    # Only read by the root-run zitadel-secrets unit.
+    zitadel-admin-password = {
+      file  = ../secrets/auth/zitadel/admin-password.age;
+      owner = "root";
+      group = "root";
+      mode  = "400";
     };
   };
 
-  # 2) Fetch your age.key at boot
-  systemd.services.fetch-age-key = {
-    after  = [ "vault.service" ];
-    wants  = [ "vault.service" ];
-    serviceConfig = {
-      Type        = "oneshot";
-      ExecStart   = "${pkgs.vault}/bin/vault kv get -field=key secret/age-key > /etc/age.key";
-      User        = "root";
-      Group       = "root";
-      RemainAfterExit = true;
+  custom.zitadel = {
+    enable = true;
+    domain = "auth.goobtube.tv";
+    port   = 8080;
+    masterKeyFile            = config.age.secrets.zitadel-master-key.path;
+    initialAdminPasswordFile = config.age.secrets.zitadel-admin-password.path;
+    postgres = {
+      passwordFile      = config.age.secrets.zitadel-postgres-password.path;
+      adminPasswordFile = config.age.secrets.zitadel-postgres-admin-password.path;
     };
   };
 
-  # 3) Put your Zitadel client secret on disk (out‑of‑band)
-  environment.etc."zitadel/client-secret" = {
-    source = ./secrets/zitadel-client-secret;
-    user   = "root"; group = "root"; mode = "0400";
+  # Stays disabled until Phase 7 (manual Zitadel UI config) produces a real
+  # client ID/secret and Phase 8 encrypts them -- clientSecretFile/
+  # cookieSecretFile are intentionally left unset here since those secrets
+  # don't exist yet, and enable = false means the module never reads them.
+  custom.oauth2-proxy = {
+    enable        = false;
+    zitadelDomain = "auth.goobtube.tv";
+    redirectUrl   = "https://oauth.goobtube.tv/oauth2/callback";
+    cookieDomain  = ".goobtube.tv";
+    clientId      = "";
   };
 
-  # 4) Now SOPS‑Nix can hydrate your secrets from /etc/age.key
-  imports = [ inputs.sops-nix.nixosModules.sops ];
-  security.sops = {
-    defaultSopsFile = ./secrets/secrets.yaml;
-    age.keyFile     = "/etc/age.key";
-    secrets.tailscale-authkey = {
-      owner = "root"; group = "root"; path = "/var/lib/tailscale/authkey";
-    };
+  services.tailscale = {
+    enable             = true;
+    useRoutingFeatures = "client";
+    authKeyFile        = config.age.secrets.tailscale-authkey.path;
+  };
+
+  networking.firewall = {
+    enable          = true;
+    allowedTCPPorts = [ 22 8080 4180 ];
   };
 }
