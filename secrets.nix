@@ -61,6 +61,7 @@ in
   "master-key"
   "postgres-password"
   "postgres-admin-password"
+  "admin-password"
 ]) //
 (mkServiceSecrets "lore" lore "lore" [
   "tls-cert"

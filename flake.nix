@@ -47,6 +47,7 @@
       nuclio          = import ./modules/nuclio;
       nuclio-functions = import ./modules/nuclio/functions.nix;
       lore            = import ./modules/lore.nix;
+      zitadel         = import ./modules/zitadel.nix;
     };
 
     # For VM image building (e.g., `nix build`)

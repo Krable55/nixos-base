@@ -80,6 +80,19 @@
             "Password is randomly generated (min 24 characters)",
             "File can be decrypted with: agenix -d secrets/auth/zitadel/postgres-admin-password.age"
           ]
+        },
+        {
+          "id": "1.7",
+          "task": "Add and generate zitadel admin-password secret (added during Phase 2)",
+          "file": "secrets/auth/zitadel/admin-password.age",
+          "status": "completed",
+          "depends_on": ["1.3"],
+          "note": "Not in the original Phase 1 scope. Phase 2 module design keeps the FirstInstance bootstrap password out of the world-readable Nix store by sourcing it from an agenix secret via extraStepsPaths instead of hardcoding it in services.zitadel.steps. Added to secrets.nix's mkServiceSecrets for auth/zitadel alongside the other 3 secrets.",
+          "acceptance_criteria": [
+            "admin-password.age file is created and encrypted for auth + kyle recipients",
+            "Password is randomly generated",
+            "Referenced by modules/zitadel.nix as custom.zitadel.initialAdminPasswordFile"
+          ]
         }
       ]
     },
@@ -91,7 +104,7 @@
           "id": "2.1",
           "task": "Create modules/zitadel.nix with options definition",
           "file": "modules/zitadel.nix",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "File modules/zitadel.nix exists",
             "Module defines options.custom.zitadel.enable",
@@ -104,7 +117,7 @@
           "id": "2.2",
           "task": "Add PostgreSQL configuration to zitadel module",
           "file": "modules/zitadel.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["2.1"],
           "acceptance_criteria": [
             "services.postgresql.enable = true when custom.zitadel.enable",
@@ -118,8 +131,9 @@
           "id": "2.3",
           "task": "Add services.zitadel configuration",
           "file": "modules/zitadel.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["2.2"],
+          "note": "Confirmed against zitadel v2.71.7's cmd/defaults.yaml (the version pinned in nixpkgs at this flake's rev): Database.postgres.Admin.ExistingDatabase defaults to 'postgres', meaning Zitadel's init/admin connection targets the 'postgres' maintenance DB, not the 'zitadel' DB, unless overridden. Since pg_hba is scoped per-database (local zitadel ... md5), Admin.ExistingDatabase is explicitly set to 'zitadel' so that connection matches the scoped rule instead of falling through to the untouched 'local all postgres peer' default. Also confirmed via cmd/zitadel.go that multiple --config files are merged with viper.MergeInConfig (recursive/deep merge), so splitting Database.postgres.User.Password and Admin.Password into the runtime secrets file while the rest of Database.postgres stays in the generated store file is safe.",
           "acceptance_criteria": [
             "services.zitadel.enable = true when custom.zitadel.enable",
             "tlsMode set to 'external'",
@@ -134,7 +148,7 @@
           "id": "2.4",
           "task": "Add systemd services for secrets generation",
           "file": "modules/zitadel.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["2.3"],
           "acceptance_criteria": [
             "systemd.services.postgresql-zitadel-password defined",
@@ -150,8 +164,9 @@
           "id": "2.5",
           "task": "Add firewall rules to zitadel module",
           "file": "modules/zitadel.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["2.4"],
+          "note": "Implemented via services.zitadel.openFirewall = true (upstream module option) rather than a manual networking.firewall.allowedTCPPorts entry, to avoid duplicating the port declaration. Verified with a real evaluation (not just --parse): a scratch nixosSystem importing modules/zitadel.nix with custom.zitadel.enable = true was built via `nix-instantiate --eval -A config.system.build.toplevel.drvPath`, which forces the full module fixpoint and all NixOS assertions to resolve. It succeeded, and config.services.zitadel.settings / config.services.postgresql.authentication rendered as expected (pg_hba rules for zitadel db correctly inserted above the module defaults). This is stronger than task 4.1's dependency ordering suggests is needed before any evaluation is possible -- worth doing this kind of scratch eval again after Phase 3/4 changes rather than waiting for a full colmena build.",
           "acceptance_criteria": [
             "networking.firewall.allowedTCPPorts includes cfg.port (8080)",
             "Module compiles without errors: nix-instantiate --eval -E '(import ./modules/zitadel.nix)'"
