@@ -420,8 +420,9 @@
           "id": "6.1",
           "task": "Deploy auth host with colmena",
           "command": "colmena apply --on @auth",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["4.5", "1.6"],
+          "note": "First apply failed: zitadel/postgresql-zitadel-password/zitadel-secrets crash-looped because the Phase 1 secrets (created via scripts/add-secret.sh, which is broken -- see the empty-secrets note on 1.4-1.6) were actually 0 bytes. Regenerated all 4 zitadel secrets with `age` directly. Second apply got past Postgres auth but zitadel.service then failed migration 03_default_instance on Errors.User.PasswordComplexityPolicy.HasSymbol -- the bootstrap admin password (random base64) had no character Zitadel counts as a symbol. Regenerated with a password guaranteeing upper/lower/digit/symbol. Third apply succeeded: only tailscaled-autoconnect.service failed, which is expected and separate (tailscale-authkey was also empty; real key handed off to the user to encrypt themselves rather than paste through chat).",
           "acceptance_criteria": [
             "colmena build succeeds without errors",
             "colmena apply completes successfully",
@@ -432,8 +433,9 @@
           "id": "6.2",
           "task": "Verify Zitadel service started",
           "command": "ssh root@192.168.50.125 journalctl -u zitadel --no-pager | tail -50",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["6.1"],
+          "note": "Confirmed: active (running), \"server is listening on [::]:8080\", port 8080 LISTEN owned by the zitadel process.",
           "acceptance_criteria": [
             "zitadel.service is active (running)",
             "Logs show 'server is listening' or similar startup message",
@@ -445,8 +447,9 @@
           "id": "6.3",
           "task": "Verify PostgreSQL running",
           "command": "ssh root@192.168.50.125 systemctl status postgresql",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["6.1"],
+          "note": "Confirmed: postgresql.service active, database 'zitadel' exists owned by role 'zitadel', role 'zitadel' exists.",
           "acceptance_criteria": [
             "postgresql.service is active (running)",
             "Database 'zitadel' exists: sudo -u postgres psql -c '\\l' | grep zitadel",
@@ -457,8 +460,9 @@
           "id": "6.4",
           "task": "Deploy networking host (Traefik updates)",
           "command": "colmena apply --on @networking",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["5.6"],
+          "note": "traefik.service restarted cleanly, active (running), no errors of its own. atuin.service failed on this same apply, but that's the same pre-existing empty-secrets bug (atuin-jwt-secret/atuin-database-key), explicitly out of scope for this session -- not caused by the Traefik changes.",
           "acceptance_criteria": [
             "colmena apply completes successfully",
             "traefik.service restarted without errors",
@@ -470,6 +474,7 @@
           "task": "Test Zitadel accessible at https://auth.goobtube.tv",
           "status": "pending",
           "depends_on": ["6.2", "6.4"],
+          "note": "3 of 4 criteria confirmed from the Traefik host directly (--resolve to bypass external DNS): curl returns 302 -> /ui/login, following redirects lands on a real 200 /ui/console/ page, so the Zitadel login page genuinely renders. NOT met: valid Let's Encrypt cert. traefik.log shows 'cannot get ACME client cloudflare: some credentials information are missing: CLOUDFLARE_DNS_API_TOKEN,CLOUDFLARE_ZONE_API_TOKEN' -- there's no EnvironmentFile or Environment= wired to traefik.service for Cloudflare credentials at all (systemctl cat/show show nothing). This is not new and not specific to auth.goobtube.tv: the identical error fires for 'lidarr.goobtube.tv' (Host(`lidarr.goobtube.tv`) && PathPrefix(`/`)), an unrelated pre-existing router, meaning Traefik is currently serving its self-signed default cert for every *.goobtube.tv domain, not just this one. Whatever secret/module wiring was supposed to supply Cloudflare credentials to modules/traefik.nix predates this branch and is out of scope for the Zitadel task -- flagged to the user, not fixed here. External reachability (actual internet access to https://auth.goobtube.tv, vs. testing from the Traefik host's own loopback) also hasn't been checked, since Cloudflare Tunnel/DNS routing from the public internet is a separate concern from what this task controls.",
           "acceptance_criteria": [
             "curl -k https://auth.goobtube.tv returns 200 or redirect to login",
             "Browser can load https://auth.goobtube.tv",
