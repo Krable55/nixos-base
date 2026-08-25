@@ -16,9 +16,16 @@ in {
 
       settings = {
         server = {
+          # DOMAIN stays the LAN IP -- it drives the SSH clone URL
+          # (ssh://forgejo@.../...), and SSH access still goes straight to
+          # this host on port 22, not through Traefik. ROOT_URL is what
+          # this "you're viewing through a different URL" warning checks
+          # against, and now that git.goobtube.tv is the real public path
+          # (behind Zitadel, TLS terminated at Traefik), it needs to match
+          # that, not the internal address Traefik forwards to.
           DOMAIN = "192.168.50.243";
           HTTP_PORT = 3000;
-          ROOT_URL = "http://192.168.50.243:3000/";
+          ROOT_URL = "https://git.goobtube.tv/";
         };
 
         database = {
@@ -28,6 +35,12 @@ in {
 
         repository = {
           ROOT = lib.mkForce "/var/lib/forgejo/repos";
+        };
+
+        # Closed 2026-08-09: /user/sign_up was reachable and returning 200,
+        # meaning anyone who found this instance could self-register.
+        service = {
+          DISABLE_REGISTRATION = true;
         };
       };
     };

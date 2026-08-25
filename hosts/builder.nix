@@ -19,6 +19,16 @@
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "n8n" ];
   custom.n8n.enable = true;
 
+  # The Jellyseerr/Sonarr/Radarr -> Signal workflow keys its message state by
+  # media id in workflow static data, which n8n reads at execution start and
+  # writes at execution end. Concurrent webhooks therefore read the same
+  # snapshot and the last writer wins: execution 106 recorded "Added to
+  # library", 107 landed 3s later off the same stale read, and 106's line was
+  # gone. These arrs fire in bursts, so serialising production executions is
+  # what keeps that state coherent; the volume here is a handful of events a
+  # day, so there's nothing to gain from parallelism.
+  custom.n8n.env.N8N_CONCURRENCY_PRODUCTION_LIMIT = "1";
+
   networking.hostName = "builder";
 
   # Agenix secret for Tailscale
@@ -66,13 +76,18 @@
   # };
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 
+    allowedTCPPorts = [
       # 22 # SSH
-      # 80 
-      # 443 
+      # 80
+      # 443
       5678 #n8n
       8080
       3005
     ];
   };
+
+  # This host had zero swap, which is why the n8n 2.28.6 build's V8 heap
+  # overflow (see modules/n8n.nix) took down the whole build instead of
+  # degrading gracefully. Same pattern already used on hosts/lore.nix.
+  swapDevices = [{ device = "/swapfile"; size = 6144; }];
 }

@@ -224,9 +224,38 @@ servers = [ { url = "h2c://192.168.50.125:8080"; } ];
 ## Protected Services (Same as Current)
 
 These routers already have `middlewares = [ "oauth-errors" "oauth-auth-redirect" ]`:
-- audiobooks, code, deluge, kavita, library, lidarr, mealie
-- n8n, podgrab, prowlarr, radarr, readarr, sab, sonarr
-- tautulli, traefik, uptime, whoami, faasd
+- audiobooks, deluge, library, lidarr
+- n8n, prowlarr, radarr, sab, sonarr
+- tautulli, traefik, faasd
+
+Note: `whoami` was removed from this list (and from `modules/traefik.nix`) on
+2026-08-09 -- its `whoami-backend` service was pointed at
+`192.168.50.154:80`, which turned out to be the Unraid NAS admin panel
+("Tower"), not a disposable test container. Exposing a NAS management UI on
+public DNS behind this stack was a bigger risk than intended even gated by
+Zitadel, so it was pulled entirely; Unraid stays reachable via its own
+Tailscale node (`tower`, already present on the tailnet) instead.
+
+Note: on 2026-08-09 a full backend audit (checking every router's actual
+destination against `docker ps` on the NAS and every host's colmena config)
+found most `*-backend` targets were wrong, undefined, or pointed at stopped
+containers -- carried over from whenever this file was first written and
+never verified end-to-end. Fixed: `traefik` (was pointing at the NAS's
+qBittorrent, now `127.0.0.1:8080`, the real dashboard), `tautulli` (was the
+NAS's Calibre, now `192.168.50.64:8181`, native on media-center), `gitea`
+(now Forgejo on builder, `192.168.50.243:3000`), `n8n` (backend was
+undefined -- router was hard-broken, not just misrouted; now
+`192.168.50.243:5678`, native on builder), `sab` (wrong port on the NAS;
+now `192.168.50.69:8090`, native on networking), `deluge` (deluge doesn't
+exist anywhere -- now points at the native qBittorrent on networking,
+`192.168.50.69:8089`; hostname kept as `deluge.goobtube.tv` since renaming
+to `qbittorrent.goobtube.tv` needs a new DNS record), `audiobooks`
+(audiobookshelf container is stopped -- repointed at ReadMeABook, the
+audiobook app actually running on the NAS, `192.168.50.154:3030`).
+Removed entirely (no matching service anywhere in the fleet or NAS):
+`code`, `immich`, `kavita`, `mealie`, `obsidian-livesync`, `podgrab`,
+`uptime`, and the legacy root `oauth` router. Removed for now (container
+exists on the NAS but is stopped): `readarr` -- re-add once restarted.
 
 ---
 
@@ -235,7 +264,7 @@ These routers already have `middlewares = [ "oauth-errors" "oauth-auth-redirect"
 1. **Zitadel health**: `curl -k https://auth.goobtube.tv/debug/healthz`
 2. **oauth2-proxy health**: `curl http://192.168.50.125:4180/ping`
 3. **Auth flow test**: Access any protected service -> should redirect to Zitadel login
-4. **Check headers**: Access `whoami.goobtube.tv` after login -> verify X-Auth-Request-* headers
+4. **Check headers**: Access `uptime.goobtube.tv` after login -> verify X-Auth-Request-* headers
 
 ---
 

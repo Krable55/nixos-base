@@ -7,7 +7,6 @@
     ../modules/nfs.nix
     ../modules/create-ssh.nix
     ../modules/qbittorrent.nix
-    ../modules/wireguard-nord.nix
     ../modules/traefik.nix
     ../modules/cloudflared.nix
     ../modules/claude-code.nix
@@ -19,7 +18,6 @@
   
   networking.hostName = "network";
   custom.qbittorrent.enable = true;
-  custom.wgnord.enable = true;
   custom.cloudflared.enable = true;
   custom.claude-code.enable = true;
   
@@ -96,9 +94,6 @@
       8090 # Sabnzbd
       8888 # Atuin
       45036
-      51820
-      51822
-      5000
     ];
   };
 

@@ -100,6 +100,12 @@ in {
       extraConfig = {
         code-challenge-method = "S256";
         pass-authorization-header = true;
+        # Without this, oauth2-proxy rejects the post-login "rd" redirect
+        # target (e.g. https://whoami.goobtube.tv/) as "domain / port not
+        # in whitelist" and silently drops it, landing the user on a
+        # default page instead of the service they originally requested.
+        # cfg.cookieDomain is already the right wildcard value (".goobtube.tv").
+        whitelist-domain = cfg.cookieDomain;
       };
     };
 

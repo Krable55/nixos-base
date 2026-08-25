@@ -4,6 +4,13 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
 
+    # Pinned to the nixpkgs commit that bumped n8n to 2.33.7 (merged
+    # 2026-08-09, PR NixOS/nixpkgs#550691) -- the main nixpkgs input above
+    # only has 2.32.6 as of this writing. Used only to pull the n8n
+    # package itself (see modules/n8n.nix); everything else stays on the
+    # main pin.
+    nixpkgs-n8n.url = "github:NixOS/nixpkgs/6d2c43d6d44ac102642231913e62272193393c98";
+
     colmena = {
       url   = "github:zhaofengli/colmena";
       flake = true;

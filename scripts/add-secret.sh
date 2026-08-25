@@ -96,7 +96,10 @@ echo -e "${GREEN}Creating encrypted secret...${NC}"
 TEMP_EDITOR=$(mktemp)
 cat > "$TEMP_EDITOR" << 'WRAPPER_EOF'
 #!/bin/sh
-echo -n "$SECRET_VALUE" > "$1"
+# printf, not `echo -n`: on this machine /bin/sh's echo doesn't treat -n as
+# a flag, it prints "-n " literally and still appends a newline -- silently
+# corrupting every secret written this way (prefix + trailing newline).
+printf '%s' "$SECRET_VALUE" > "$1"
 WRAPPER_EOF
 chmod +x "$TEMP_EDITOR"
 

@@ -517,7 +517,7 @@
         {
           "id": "7.3",
           "task": "Create project for oauth2-proxy",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["7.2"],
           "acceptance_criteria": [
             "Navigate to Projects section",
@@ -530,10 +530,11 @@
           "task": "Create Web application (Authorization Code + PKCE)",
           "config": {
             "redirect_uri": "https://oauth.goobtube.tv/oauth2/callback",
-            "post_logout_uri": "https://goobtube.tv"
+            "post_logout_uri": "https://auth.goobtube.tv"
           },
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["7.3"],
+          "note": "Named 'Traefik'. Auth method switched from PKCE (None) to Basic so a client secret would be issued, per task 7.5/8.2. Post logout URI set to https://auth.goobtube.tv (login page) instead of the plan's https://goobtube.tv -- deliberate change, not consumed by any Nix config (modules/oauth2-proxy.nix has no post-logout option), it's only a Zitadel-side redirect whitelist entry.",
           "acceptance_criteria": [
             "Application type is 'Web'",
             "Auth method is 'Code' (Authorization Code)",
@@ -546,7 +547,7 @@
         {
           "id": "7.5",
           "task": "Copy Client ID and Client Secret",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["7.4"],
           "acceptance_criteria": [
             "Client ID copied (format: numbers like '12345678901234567')",
@@ -566,7 +567,7 @@
           "task": "Add oauth2-proxy secrets definitions to secrets.nix",
           "file": "secrets.nix",
           "secrets": ["client-secret", "cookie-secret"],
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["7.5"],
           "acceptance_criteria": [
             "mkServiceSecrets call added for 'auth' host with 'oauth2-proxy' service",
@@ -579,7 +580,7 @@
           "id": "8.2",
           "task": "Create oauth2-proxy client-secret from Zitadel",
           "file": "secrets/auth/oauth2-proxy/client-secret.age",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["8.1"],
           "acceptance_criteria": [
             "Directory secrets/auth/oauth2-proxy/ exists",
@@ -591,7 +592,7 @@
           "id": "8.3",
           "task": "Generate oauth2-proxy cookie-secret",
           "file": "secrets/auth/oauth2-proxy/cookie-secret.age",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["8.1"],
           "acceptance_criteria": [
             "cookie-secret.age created with random 32-byte value",
@@ -609,7 +610,7 @@
           "id": "9.1",
           "task": "Add oauth2-proxy agenix secrets to hosts/auth.nix",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["8.3"],
           "acceptance_criteria": [
             "age.secrets.oauth2-proxy-client-secret defined",
@@ -622,7 +623,7 @@
           "id": "9.2",
           "task": "Set clientId in custom.oauth2-proxy config",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["9.1"],
           "acceptance_criteria": [
             "custom.oauth2-proxy.clientId set to Client ID from task 7.5",
@@ -634,7 +635,7 @@
           "id": "9.3",
           "task": "Enable custom.oauth2-proxy",
           "file": "hosts/auth.nix",
-          "status": "pending",
+          "status": "completed",
           "depends_on": ["9.2"],
           "acceptance_criteria": [
             "custom.oauth2-proxy.enable = true",
@@ -688,12 +689,13 @@
         {
           "id": "10.3",
           "task": "Test auth redirect on protected service",
-          "url": "https://whoami.goobtube.tv",
+          "url": "https://uptime.goobtube.tv",
           "expected": "Redirect to Zitadel login",
           "status": "pending",
           "depends_on": ["10.2"],
+          "note": "Originally tested against whoami.goobtube.tv, which turned out to be misrouted to the Unraid NAS admin panel (192.168.50.154) rather than a disposable test container -- that router was removed from modules/traefik.nix on 2026-08-09 (NAS now Tailscale-only). The core redirect mechanism (statusRewrites 401->302, {url} placeholder, whitelist-domain) was verified via curl against the old whoami router before removal: confirmed HTTP/2 302, correct Location to Zitadel, CSRF cookie set, rd target accepted. Not yet confirmed end-to-end in an actual browser -- retarget to uptime.goobtube.tv for that.",
           "acceptance_criteria": [
-            "Accessing whoami.goobtube.tv without auth redirects to oauth.goobtube.tv",
+            "Accessing uptime.goobtube.tv without auth redirects to oauth.goobtube.tv",
             "oauth.goobtube.tv redirects to auth.goobtube.tv login",
             "Zitadel login page is displayed",
             "No infinite redirect loops"
@@ -706,8 +708,8 @@
           "depends_on": ["10.3"],
           "acceptance_criteria": [
             "Login to Zitadel with admin account",
-            "Redirect back to whoami.goobtube.tv succeeds",
-            "whoami service displays X-Auth-Request-User header",
+            "Redirect back to uptime.goobtube.tv succeeds",
+            "uptime service displays X-Auth-Request-User header",
             "X-Auth-Request-Email header contains user email",
             "Subsequent requests to protected services work without re-login (SSO)"
           ]

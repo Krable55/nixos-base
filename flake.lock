@@ -192,6 +192,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-n8n": {
+      "locked": {
+        "lastModified": 1786261098,
+        "narHash": "sha256-KLW/wVyW8M5Fq3bXu89TIdQBVYu9L+DWwbaFMp71Ye0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "6d2c43d6d44ac102642231913e62272193393c98",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "6d2c43d6d44ac102642231913e62272193393c98",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1784497964,
@@ -229,6 +245,7 @@
         "colmena": "colmena",
         "nixos-generators": "nixos-generators",
         "nixpkgs": "nixpkgs_2",
+        "nixpkgs-n8n": "nixpkgs-n8n",
         "sops-nix": "sops-nix"
       }
     },

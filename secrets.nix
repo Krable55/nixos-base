@@ -63,6 +63,13 @@ in
   "postgres-admin-password"
   "admin-password"
 ]) //
+(mkServiceSecrets "auth" auth "oauth2-proxy" [
+  "client-secret"
+  "cookie-secret"
+]) //
+(mkServiceSecrets "auth" auth "postfix" [
+  "gmx-password"
+]) //
 (mkServiceSecrets "lore" lore "lore" [
   "tls-cert"
   "tls-key"

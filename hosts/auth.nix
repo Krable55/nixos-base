@@ -49,6 +49,21 @@
       group = "root";
       mode  = "400";
     };
+
+    # Read by the root-run oauth2-proxy-env unit (see modules/oauth2-proxy.nix).
+    oauth2-proxy-client-secret = {
+      file  = ../secrets/auth/oauth2-proxy/client-secret.age;
+      owner = "root";
+      group = "root";
+      mode  = "400";
+    };
+
+    oauth2-proxy-cookie-secret = {
+      file  = ../secrets/auth/oauth2-proxy/cookie-secret.age;
+      owner = "root";
+      group = "root";
+      mode  = "400";
+    };
   };
 
   custom.zitadel = {
@@ -63,16 +78,19 @@
     };
   };
 
-  # Stays disabled until Phase 7 (manual Zitadel UI config) produces a real
-  # client ID/secret and Phase 8 encrypts them -- clientSecretFile/
-  # cookieSecretFile are intentionally left unset here since those secrets
-  # don't exist yet, and enable = false means the module never reads them.
+  # Phase 7/8 done: Traefik app created in Zitadel (Basic auth method) and
+  # both secrets encrypted. Traefik's oauth-auth-redirect/oauth-errors
+  # middlewares are still commented out (modules/traefik.nix:91-101) until
+  # this deploys and oauth2-proxy is confirmed listening on 4180 -- do not
+  # uncomment those until after this host redeploys successfully.
   custom.oauth2-proxy = {
-    enable        = false;
+    enable        = true;
     zitadelDomain = "auth.goobtube.tv";
     redirectUrl   = "https://oauth.goobtube.tv/oauth2/callback";
     cookieDomain  = ".goobtube.tv";
-    clientId      = "";
+    clientId      = "385471465094460029";
+    clientSecretFile = config.age.secrets.oauth2-proxy-client-secret.path;
+    cookieSecretFile  = config.age.secrets.oauth2-proxy-cookie-secret.path;
   };
 
   services.tailscale = {
