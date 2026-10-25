@@ -1,6 +1,13 @@
 # nixos-base
 NixOS flakes and configurations for Proxmox VMs and Colmena deployments.
 
+## Raspberry Pi 4
+
+See [Pi4 image, evaluation, deployment and recovery](docs/pi4.md). The Pi uses a
+separate stable package pin; existing VM pins are unchanged. Use only the named
+Pi image output and Pi-scoped Colmena commands for this workflow. A local image
+build does not authorize flashing or deployment.
+
 ### Update flake and rebuild (from VM)
 1. `sudo nix flake update`
 2. `sudo nixos-rebuild switch --flake .#nixos-builder`

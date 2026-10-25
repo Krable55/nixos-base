@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    # Isolated Pi lifecycle: do not upgrade the existing fleet package set.
+    nixpkgs-pi.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     colmena = {
       url   = "github:zhaofengli/colmena";
@@ -36,6 +38,15 @@
     claude     = import ./modules/claude-code.nix;
   };
   in {
+    # Explicit ARM image output: independent of the legacy VM generator outputs.
+    nixosConfigurations.pi4-image = inputs.nixpkgs-pi.lib.nixosSystem {
+      system = "aarch64-linux";
+      specialArgs = { inherit inputs outputs; };
+      modules = [ ./hosts/pi4.nix ./images/pi4.nix ];
+    };
+    packages.aarch64-linux.pi4-image =
+      self.nixosConfigurations.pi4-image.config.system.build.sdImage;
+
     # For VM image building (e.g., `nix build`)
     packages.${system}.default = nixos-generators.nixosGenerate {
       inherit system;
@@ -79,10 +90,22 @@
           system = "x86_64-linux";
         };
         specialArgs = {inherit inputs outputs;};
+        nodeNixpkgs.pi4 = import inputs.nixpkgs-pi { system = "aarch64-linux"; };
       };
 
       # “defaults” get merged into every node’s config
-      defaults = import ./base.nix;
+      defaults = { imports = [ ./modules/common.nix ]; };
+
+      pi4 = {
+        imports = [ ./hosts/pi4.nix ];
+        deployment = {
+          targetHost = "pi4.local";
+          targetUser = "kyle";
+          privilegeEscalationCommand = [ "sudo" "-n" "-H" "--" ];
+          buildOnTarget = true;
+          tags = [ "pi4" ];
+        };
+      };
 
       media-center = { config, pkgs, lib, ... }: {
         deployment = {
@@ -91,7 +114,7 @@
           buildOnTarget = true;
           tags = [ "media-center" "media" "infra-media" ];
         };
-        imports = [ ./hosts/media-center.nix ];
+        imports = [ ./base.nix ./hosts/media-center.nix ];
       };
 
       builder = { config, pkgs, lib, ... }: {
@@ -101,7 +124,7 @@
           buildOnTarget = true;
           tags = [ "builder" "infra-builder" ];
         };
-        imports = [ ./hosts/builder.nix ];
+        imports = [ ./base.nix ./hosts/builder.nix ];
       };
 
       networking = { config, pkgs, lib, ... }: {
@@ -111,7 +134,7 @@
           buildOnTarget = true;
           tags = [ "network" "networking" "infra-networking" ];
         };
-        imports = [ ./hosts/networking.nix ];
+        imports = [ ./base.nix ./hosts/networking.nix ];
       };
 
       powerball = { config, pkgs, lib, ... }: {
@@ -121,7 +144,7 @@
           buildOnTarget = true;
           tags = [ "powerball" ];
         };
-        imports = [ ./hosts/powerball.nix ];
+        imports = [ ./base.nix ./hosts/powerball.nix ];
       };
     };
   };
