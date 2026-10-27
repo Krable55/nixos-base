@@ -1,6 +1,13 @@
 # nixos-base
 NixOS flakes and configurations for Proxmox VMs and Colmena deployments.
 
+## Raspberry Pi 4
+
+See [Pi4 image, evaluation, deployment and recovery](docs/pi4.md). The Pi uses a
+separate stable package pin; existing VM pins are unchanged. Use only the named
+Pi image output and Pi-scoped Colmena commands for this workflow. A local image
+build does not authorize flashing or deployment.
+
 ## Quick Start
 
 ### Update flake and rebuild (from VM)
@@ -90,7 +97,7 @@ Use the `add-service-secrets.sh` script to add multiple secrets at once:
 ### Editing Existing Secrets
 
 To edit an existing secret:
-# Edit 
+# Edit
 ```
 agenix -i ~/.ssh/id_ed25519 secrets/media-center/kometa/plex-token.age
 ```
@@ -112,7 +119,7 @@ cat secrets.nix
 1. Create an empty WireGuard  config file here: `/etc/wireguard/wg0.conf`
  > You can get a valid server config for nord VPN using [this website](https://nord-configs.onrender.com/),
 
-3. Follow the steps mentioned in `wireguard_helper.sh` to run the script and retrieve your NordLynx Private Key. Include this in the 
+3. Follow the steps mentioned in `wireguard_helper.sh` to run the script and retrieve your NordLynx Private Key. Include this in the
 `wg0.conf` file.
 
 ```

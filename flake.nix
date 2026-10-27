@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    # Isolated Pi lifecycle: do not upgrade the existing fleet package set.
+    nixpkgs-pi.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     # Pinned to the nixpkgs commit that bumped n8n to 2.33.7 (merged
     # 2026-08-09, PR NixOS/nixpkgs#550691) -- the main nixpkgs input above
@@ -35,12 +37,20 @@
   outputs = { self, nixpkgs, nixos-generators, sops-nix, agenix, colmena, ... }@inputs: let
   inherit (self) outputs;
   system = "x86_64-linux";
-  
+
   # Support multiple systems for development
   supportedSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ];
   forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
   in {
+    # Explicit ARM image output: independent of the legacy VM generator outputs.
+    nixosConfigurations.pi4-image = inputs.nixpkgs-pi.lib.nixosSystem {
+      system = "aarch64-linux";
+      specialArgs = { inherit inputs outputs; };
+      modules = [ ./hosts/pi4.nix ./images/pi4.nix ];
+    };
+    packages.aarch64-linux.pi4-image =
+      self.nixosConfigurations.pi4-image.config.system.build.sdImage;
     # Export nixosModules as a flake output
     nixosModules = {
       default         = import ./configuration.nix;
@@ -113,10 +123,22 @@
           system = "x86_64-linux";
         };
         specialArgs = {inherit inputs outputs;};
+        nodeNixpkgs.pi4 = import inputs.nixpkgs-pi { system = "aarch64-linux"; };
       };
 
       # “defaults” get merged into every node’s config
-      defaults = import ./base.nix;
+      defaults = { imports = [ ./modules/common.nix ]; };
+
+      pi4 = {
+        imports = [ ./hosts/pi4.nix ];
+        deployment = {
+          targetHost = "pi4.local";
+          targetUser = "kyle";
+          privilegeEscalationCommand = [ "sudo" "-n" "-H" "--" ];
+          buildOnTarget = true;
+          tags = [ "pi4" ];
+        };
+      };
 
       media-center = { config, pkgs, lib, ... }: {
         deployment = {
@@ -125,7 +147,7 @@
           buildOnTarget = true;
           tags = [ "media-center" "media" "infra-media" ];
         };
-        imports = [ ./hosts/media-center.nix ];
+        imports = [ ./base.nix ./hosts/media-center.nix ];
       };
 
       builder = { config, pkgs, lib, ... }: {
@@ -135,7 +157,7 @@
           buildOnTarget = true;
           tags = [ "builder" "infra-builder" ];
         };
-        imports = [ ./hosts/builder.nix ];
+        imports = [ ./base.nix ./hosts/builder.nix ];
       };
 
       networking = { config, pkgs, lib, ... }: {
@@ -145,7 +167,7 @@
           buildOnTarget = true;
           tags = [ "network" "networking" "infra-networking" ];
         };
-        imports = [ ./hosts/networking.nix ];
+        imports = [ ./base.nix ./hosts/networking.nix ];
       };
 
       auth = { config, pkgs, lib, ... }: {
@@ -155,9 +177,9 @@
           buildOnTarget = true;
           tags = [ "auth" ];
         };
-        imports = [ ./hosts/auth.nix ];
+        imports = [ ./base.nix ./hosts/auth.nix ];
       };
-      
+
       powerball = { config, pkgs, lib, ... }: {
         deployment = {
           targetHost    = "192.168.50.119";
@@ -165,9 +187,9 @@
           buildOnTarget = true;
           tags = [ "powerball" ];
         };
-        imports = [ ./hosts/powerball.nix ];
+        imports = [ ./base.nix ./hosts/powerball.nix ];
       };
-      
+
       trader = { config, pkgs, lib, ... }: {
         deployment = {
           targetHost    = "192.168.50.86";
@@ -175,7 +197,7 @@
           buildOnTarget = true;
           tags = [ "trader" ];
         };
-        imports = [ ./hosts/trader.nix ];
+        imports = [ ./base.nix ./hosts/trader.nix ];
       };
 
       lore = { config, pkgs, lib, ... }: {
@@ -185,7 +207,7 @@
           buildOnTarget = true;
           tags          = [ "lore" ];
         };
-        imports = [ ./hosts/lore.nix ];
+        imports = [ ./base.nix ./hosts/lore.nix ];
       };
     };
 
@@ -199,7 +221,7 @@
           age
           openssh
         ];
-        
+
         shellHook = ''
           echo "🔑 Development shell loaded!"
           echo "Available commands: agenix, colmena, git, age, ssh"
