@@ -1,0 +1,8 @@
+# Pi4 runtime secrets: either the Pi host key or the offline recovery identity
+# can decrypt. The recovery identity is held in 1Password Infrastructure Recovery,
+# item "Pi4 SOPS age recovery key", outside workload service-account access.
+creation_rules:
+  - path_regex: ^secrets/pi4\.yaml$
+    age: >-
+      age1ww6gaksz7k2d3uwwrjc04scckc344jkd5gtesdyaxznekqln0vnqulm57y,
+      age1x0xfdm6c70lzawwvvlkrqlptednxzyw4l42ntwg2rs4m5zszncrs3ywdd3
