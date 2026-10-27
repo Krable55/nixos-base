@@ -28,12 +28,7 @@ in
 
     networking.networkmanager.enable = true;
 
-    # Enable Tailscale
-    services.tailscale = {
-      enable = true;
-      useRoutingFeatures = "client";
-      authKeyFile = lib.mkIf config.sops.secrets.tailscale-authkey.path;
-    };
+    # Tailscale service configured via tailscale-agenix module in host-specific configs
 
     # Set the time zone.
     time.timeZone = "America/Los_Angeles";
