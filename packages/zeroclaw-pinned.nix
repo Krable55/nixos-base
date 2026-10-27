@@ -1,6 +1,8 @@
 # Exact retained upstream full-feature v0.8.6 build, not nixpkgs' version.
 # Source rev c473221313341a853e04122f93bb9bd26b5e6c47; upstream flake's
 # packages.aarch64-linux.zeroclaw with its own locked nixpkgs/fenix.
+# These build artifacts intentionally remain outside Git; this is a host-specific
+# prerequisite, not a pending task to vendor them into this repository.
 # Both store paths must already be retained/transferred. Intentionally fail
 # evaluation if absent rather than silently initiating another Rust build.
 {

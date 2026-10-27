@@ -1,6 +1,9 @@
 """Run prior gates against this candidate; never modify historical results.
 Usage: isolated network namespace + Nix Python + this script [packaged-source.py].
 Only .py source fixtures are copied; all credential JSON is freshly synthetic.
+The sibling spikes/siwc-adapter archive intentionally remains outside this repo.
+This optional historical regression runner requires that local archive; it is not
+a standalone clean-checkout test. Repository-contained unit tests run separately.
 """
 import hashlib
 import json

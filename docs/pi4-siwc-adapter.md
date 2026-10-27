@@ -2,9 +2,11 @@
 
 ## PR readiness and clean-checkout limitations
 
-This configuration is being preserved as a **draft**, not certified as a portable
-clean-checkout deployment. The rollout records below are historical and do not
-establish that the current tree was deployed or tested against a live provider.
+This configuration is open for review as a host-specific deployment, not certified
+as a portable clean-checkout deployment. The external store artifacts and historical
+fixture archive are intentional prerequisites, not pending repository additions.
+The rollout records below are historical and do not establish that the current tree
+was deployed or tested against a live provider.
 
 - `packages/zeroclaw-pinned.nix` requires both exact retained Nix store objects
   listed below on the evaluator. There is no repository-contained fetch/rebuild
@@ -24,8 +26,10 @@ establish that the current tree was deployed or tested against a live provider.
 - The paired-gateway harness deletes only sessions positively acknowledged as
   newly created by that run; resumed/unconfirmed sessions are preserved.
 
-Do not merge as reproducible deployment packaging until the store and fixture
-portability requirements are resolved. Paperclip is not part of this change.
+Review this as host-specific packaging with the documented external prerequisites.
+The unresolved deadline-response failure remains a separate correctness issue;
+ready-for-review status does not mean that test passes. Paperclip is not part of
+this change.
 
 ## Status and boundary
 
