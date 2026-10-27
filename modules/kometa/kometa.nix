@@ -50,20 +50,20 @@ in {
 
     secrets = {
       plexTokenFile = lib.mkOption {
-        type = lib.types.str;
-        default = "../secrets/media-center/kometa/plex-token.age";
+        type = lib.types.path;
+        default = ../../secrets/media-center/kometa/plex-token.age;
         description = "Path to agenix encrypted Plex token file";
       };
 
       mdblistApiKeyFile = lib.mkOption {
-        type = lib.types.str;
-        default = "../secrets/media-center/kometa/mdblist-apikey.age";
+        type = lib.types.path;
+        default = ../../secrets/media-center/kometa/mdblist-apikey.age;
         description = "Path to agenix encrypted MDBList API key file";
       };
 
       tmdbApiKeyFile = lib.mkOption {
-        type = lib.types.str;
-        default = "../secrets/media-center/kometa/tmdb-apikey.age";
+        type = lib.types.path;
+        default = ../../secrets/media-center/kometa/tmdb-apikey.age;
         description = "Path to agenix encrypted TMDb API key file";
       };
     };
@@ -88,21 +88,21 @@ in {
     # Agenix secrets
     age.secrets = {
       kometa-plex-token = {
-        file = cfg.secrets.plexTokenFile;
+        file = lib.mkDefault cfg.secrets.plexTokenFile;
         owner = cfg.user;
         group = cfg.group;
         mode = "400";
       };
 
       kometa-mdblist-apikey = {
-        file = cfg.secrets.mdblistApiKeyFile;
+        file = lib.mkDefault cfg.secrets.mdblistApiKeyFile;
         owner = cfg.user;
         group = cfg.group;
         mode = "400";
       };
 
       kometa-tmdb-apikey = {
-        file = cfg.secrets.tmdbApiKeyFile;
+        file = lib.mkDefault cfg.secrets.tmdbApiKeyFile;
         owner = cfg.user;
         group = cfg.group;
         mode = "400";
@@ -189,8 +189,9 @@ in {
       wantedBy = [ "timers.target" ];
       
       timerConfig = {
-        OnCalendar = "*-*-* 03:00:00";  # Daily at 3:00 AM
+        OnCalendar = cfg.schedule;
         Persistent = true;
+        RandomizedDelaySec = "5m";
       };
     };
 

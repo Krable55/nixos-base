@@ -16,6 +16,11 @@
       flake = true;
     };
 
+    sops-nix = {
+      url = "sops-nix"; # Match the existing lock entry.
+      flake = true;
+    };
+
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -61,6 +66,7 @@
     # For VM image building (e.g., `nix build`)
     packages.${system}.default = nixos-generators.nixosGenerate {
       inherit system;
+      specialArgs = { inherit inputs outputs; };
       modules = [
         self.nixosModules.media
         self.nixosModules.forgejo
@@ -84,6 +90,7 @@
     # System config for use with `nixos-rebuild`
     nixosConfigurations."nixos-builder" = nixpkgs.lib.nixosSystem {
       inherit system;
+      specialArgs = { inherit inputs outputs; };
       modules = [
         self.nixosModules.media
         self.nixosModules.forgejo
