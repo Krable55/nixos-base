@@ -43,6 +43,19 @@
   forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
   in {
+    # ARM build cost: aarch64-linux selects an ARM build platform, NOT automatic
+    # x86 -> ARM cross-compilation. Local builds on our x86 workstation can run
+    # ARM compilers under QEMU when no cached output is available. The standalone
+    # upstream ZeroClaw v0.8.6 full-feature source build took ~3.5 hours this way.
+    # This is NOT the cost of every package addition: cached packages download,
+    # and unchanged store outputs are reused while retained (or substitutable).
+    # Service/user/credential changes alone do not rebuild the application;
+    # version, feature, source or toolchain changes can require a new build.
+    # Before another large uncached ARM build, prefer a native ARM builder,
+    # validate a real cross-build, or consider a hash-pinned upstream binary.
+    # Colmena's Pi buildOnTarget=true below instead builds natively on the Pi;
+    # the slow ZeroClaw experiment was a separate local `nix build` invocation.
+    #
     # Explicit ARM image output: independent of the legacy VM generator outputs.
     nixosConfigurations.pi4-image = inputs.nixpkgs-pi.lib.nixosSystem {
       system = "aarch64-linux";
@@ -130,7 +143,7 @@
       defaults = { imports = [ ./modules/common.nix ]; };
 
       pi4 = {
-        imports = [ ./hosts/pi4.nix ];
+        imports = [ ./hosts/pi4.nix ./modules/pi4-secrets.nix ./modules/pi4-chatgpt-auth.nix ./modules/pi4-siwc-adapter.nix ];
         deployment = {
           targetHost = "pi4.local";
           targetUser = "kyle";

@@ -1,0 +1,63 @@
+schema_version = 3
+
+[providers.models.openai.siwc]
+uri = "http://127.0.0.1:18766/v1/responses"
+wire_api = "responses"
+requires_openai_auth = true
+api_key = "@CAPABILITY@"
+model = "gpt-5.6-sol"
+context_window = 872000
+
+[secrets]
+# Runtime-only /run file, already mode0600; no persistent key copy needed.
+encrypt = false
+
+[reliability]
+provider_retries = 0
+
+[gateway]
+host = "127.0.0.1"
+port = 42617
+require_pairing = true
+allow_public_bind = false
+web_dist_dir = "@WEB_DIST_DIR@"
+
+[runtime_profiles.siwc]
+max_context_tokens = 872000
+context_compact_ratio = 0.9
+max_tool_iterations = 20
+max_delegation_depth = 0
+agentic = false
+deferred_builtin_tools = false
+
+[runtime_profiles.siwc.history_pruning]
+enabled = false
+
+[runtime_profiles.siwc.context_compression]
+enabled = false
+
+[risk_profiles.siwc]
+level = "supervised"
+workspace_only = true
+block_high_risk_commands = true
+require_approval_for_medium_risk = true
+auto_approve = ["calculator", "file_read", "glob_search", "content_search"]
+forbidden_paths = ["/var/lib/zeroclaw", "/proc", "/sys", "/root", "/etc"]
+
+[risk_profiles.siwc.delegation_policy]
+mode = "forbidden"
+
+[tools]
+optional = ["calculator"]
+
+[agents.pi4]
+enabled = true
+model_provider = "openai.siwc"
+runtime_profile = "siwc"
+risk_profile = "siwc"
+
+[agents.pi4.memory]
+backend = "sqlite"
+
+[agents.pi4.workspace]
+unrestricted_filesystem = false

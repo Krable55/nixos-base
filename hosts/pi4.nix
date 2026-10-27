@@ -3,6 +3,8 @@
   imports = [
     ../modules/common.nix
     ../hardware/pi4.nix
+    ../modules/pi4-remote-access.nix
+    ../modules/pi4-zeroclaw-account.nix
   ];
 
   # Keep workstation access in both the image and Colmena-managed system.
