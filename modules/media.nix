@@ -16,10 +16,10 @@ in {
     
     # Enable Kometa by default
     # Schedule options: "minutely", "hourly", "daily", "weekly", "monthly", "yearly"
-    # Or custom cron format: "0 4 * * *" (4am daily), "0 2 * * 0" (2am Sunday), etc.
+    # Or systemd calendar syntax: "*-*-* 04:00:00" (4am daily).
     custom.kometa = {
       enable = true;
-      schedule = "0 4 * * *";  # Run at 4:00 AM every day
+      schedule = "*-*-* 04:00:00";  # Run at 4:00 AM every day
       group = "media";
     };
     

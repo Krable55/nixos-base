@@ -92,17 +92,22 @@ From the repository root:
 
 ```sh
 python3 tests/evaluate.py
-# During this implementation, also compare the originally supplied evidence:
-python3 tests/evaluate.py --baseline ../hive-baseline.json
 ```
 
 Requires installed Python 3, Nix with flakes, and Git history containing baseline
-`87cfeeca46b5817a4723361c2b5b9dac8da7342c`. The checked-in baseline fixture is copied
-from that review's `hive-baseline.json`. The test uses a **path flake**, so untracked
-new files are included without staging. It does not build derivations or contact
+`b540883e346d3c551d4e6db9ec1b18749cf88af2`. The checked-in baseline fixture is
+derived independently from that main revision's `colmenaHive.evalSelectedDrvPaths`
+for the six evaluable VM nodes, before adding the Pi. Powerball is explicitly
+excluded from derivation equality: unchanged main cannot evaluate it because
+`age.secrets.supabase-admin-password` is missing. The full seven-node VM set is
+still asserted; the exclusion is printed on every acceptance run. Historical acceptance above used
+the original four-VM baseline; main intentionally updated the fleet pins. The test uses the **Git working-tree flake**, so only tracked files are included
+and ignored caches such as `.direnv/` are excluded. Stage any newly added source
+files before running it. It does not build derivations or contact
 SSH targets. Initial runs may fetch the pinned public inputs.
 
-Checks: exact derivation equality for all four old VMs; unchanged existing locked
+Checks: the full seven-node main VM set; exact derivation equality for the six
+evaluable main VMs (Powerball excluded as described above); unchanged existing locked
 nodes/input mappings; Pi/image derivation evaluation; matching persistent kernel,
 initrd, boot/filesystem and access policy; first-boot assembly services; no VM
 QEMU/GRUB settings on Pi. It deliberately does not claim byte-for-byte equality
@@ -171,11 +176,12 @@ using `kyle` avoids root SSH key provisioning, not administrative privilege.
 ## Pi-only Colmena operation
 
 Use the repository-pinned Colmena, not an arbitrary current `nix-shell -p colmena`.
-Verified invocation from this repository root, with explicit node filtering:
+Invocation using the merged main pin, with explicit node filtering (deployment
+with this newer CLI has not been repeated):
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' run \
-  github:zhaofengli/colmena/2370d4336eda2a9ef29fce10fa7076ae011983ab -- \
+  github:zhaofengli/colmena/5bf4ce6a24adba74a5184f4a9bef01d545a09473 -- \
   --config "path:$PWD" apply switch --impure --on pi4
 ```
 
@@ -236,8 +242,14 @@ rerun evaluation/VM equality tests; do not broadly update all flake inputs. Rebu
 and inspect the image for firmware changes, and account for FAT maintenance before
 assuming the running device has the new boot components.
 
-The historical standalone builder/VM package output refers to unexported
-`self.nixosModules`; the `overlays` output also references an absent directory.
-They are outside this change. Broad `flake check/show` can force those unrelated
-outputs; use the explicit selected outputs and acceptance test above. Their prior
-failure is not evidence that the successfully evaluated Colmena hive is broken.
+Main now exports `nixosModules`, removes the absent overlays output, and uses
+`colmenaHive`. Acceptance evaluates that public hive interface, retains every
+main lock node/input mapping, and compares the six evaluable main VM derivations
+exactly, with the explicit Powerball exclusion above.
+The Pi stable pin is retained from the original PR. The historical image and
+physical acceptance records above predate this merge; rebuilding and physical
+acceptance with the merged inputs remain separate steps.
+
+Merge validation also found that `nix flake check --no-build --all-systems`
+fails on unchanged main because its `x86_64-darwin` development shell is no longer
+supported by the fleet nixpkgs pin. This unrelated main limitation is retained.

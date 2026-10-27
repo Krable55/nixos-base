@@ -6,6 +6,7 @@
     ../modules/colmena.nix
     ../modules/supabase.nix
     ../modules/claude-code.nix
+    ../modules/agenix.nix
   ];
 
  # Modules for building and managing powerball webapp
@@ -23,6 +24,21 @@
 };
 
 custom.claude-code.enable = true;
+
+# Agenix secret for Tailscale
+age.secrets.tailscale-authkey = {
+  file = ../secrets/global/tailscale-authkey.age;
+  owner = "root";
+  group = "root";
+  mode = "600";
+};
+
+# Tailscale service configuration
+services.tailscale = {
+  enable = true;
+  useRoutingFeatures = "client";
+  authKeyFile = config.age.secrets.tailscale-authkey.path;
+};
   
   networking.firewall = {
     enable = true;

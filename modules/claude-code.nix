@@ -17,7 +17,6 @@ in {
     # Install Node.js and Claude Code CLI
     environment.systemPackages = with pkgs; [
       pkgs.${cfg.nodeVersion}
-      nodePackages.npm
       claude-code
     ];
   };

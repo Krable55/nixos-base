@@ -6,7 +6,12 @@ from pathlib import Path
 import subprocess
 
 REPO = Path(__file__).resolve().parents[1]
-BASELINE_REV = "87cfeeca46b5817a4723361c2b5b9dac8da7342c"
+BASELINE_REV = "b540883e346d3c551d4e6db9ec1b18749cf88af2"
+MAIN_NODES = {"auth", "builder", "lore", "media-center", "networking", "powerball", "trader"}
+# Confirmed by evaluating an untouched export of BASELINE_REV.
+DERIVATION_EXCLUSIONS = {
+    "powerball": "unchanged main cannot evaluate: missing age.secrets.supabase-admin-password"
+}
 
 
 def main():
@@ -19,12 +24,11 @@ def main():
     expression = r'''
       let
         f = builtins.getFlake FLAKE;
-        h = import (f.inputs.colmena.outPath + "/src/nix/hive/eval.nix") { rawFlake = f; };
+        h = f.colmenaHive;
       in
-        if !(f.colmena ? pi4) then throw "acceptance: missing pi4 hive node"
+        if !(h.nodes ? pi4) then throw "acceptance: missing pi4 hive node"
         else {
-          existing = builtins.mapAttrs (_: n: n.config.system.build.toplevel.drvPath)
-            (builtins.removeAttrs h.nodes [ "pi4" ]);
+          existingNames = builtins.attrNames (builtins.removeAttrs h.nodes [ "pi4" ]);
           pi4 = h.nodes.pi4.config.system.build.toplevel.drvPath;
           image = f.packages.aarch64-linux.pi4-image.drvPath;
           runtimeContract = import (f.outPath + "/tests/contract.nix") h.nodes.pi4;
@@ -40,7 +44,7 @@ def main():
           };
           runtimeHasImageAssembly = h.nodes.pi4.config ? sdImage;
         }
-    '''.replace("FLAKE", json.dumps("path:" + str(REPO)))
+    '''.replace("FLAKE", json.dumps("git+file://" + str(REPO)))
     command = ["nix", "--extra-experimental-features", "nix-command flakes", "eval",
                "--impure", "--no-write-lock-file", "--json", "--expr", expression]
     result = subprocess.run(command, text=True, capture_output=True)
@@ -83,19 +87,41 @@ def main():
     assert "bcm2711-rpi-4-b.dtb" in assembly["firmwareCommands"]
     assert "extlinux-conf-builder" in assembly["rootCommands"]
     assert assembly["imagePath"] == "sd-image/nixos-pi4.img.zst"
-    assert actual["existing"] == baseline, ("VM derivation drift", actual["existing"], baseline)
     old_lock = json.loads(subprocess.check_output(
         ["git", "show", BASELINE_REV + ":flake.lock"], cwd=REPO, text=True))
     new_lock = json.loads((REPO / "flake.lock").read_text())
-    assert set(new_lock["nodes"]) - set(old_lock["nodes"]) == {"nixpkgs-pi"}
+    assert set(new_lock["nodes"]) == set(old_lock["nodes"]) | {"nixpkgs-pi"}
+    assert new_lock["nodes"][new_lock["root"]]["inputs"] == {
+        **old_lock["nodes"][old_lock["root"]]["inputs"], "nixpkgs-pi": "nixpkgs-pi"}
     for name, node in old_lock["nodes"].items():
         if name == old_lock["root"]:
             for key, value in node["inputs"].items():
                 assert new_lock["nodes"][name]["inputs"][key] == value, ("root input drift", key)
         else:
             assert new_lock["nodes"][name] == node, ("existing lock node drift", name)
-    print(json.dumps({key: actual[key] for key in ["existing", "pi4", "image"]}, indent=2))
-    print(f"PASS: image/host persistent contract; access/deployment policy; {len(baseline)} exact VM drvPaths; existing lock nodes unchanged")
+    print(json.dumps({key: actual[key] for key in ["pi4", "image"]}, indent=2))
+    print("PASS: image/host persistent contract; access/deployment policy; existing lock nodes unchanged", flush=True)
+    assert actual["existingNames"] == sorted(MAIN_NODES), "VM node set drift"
+    assert set(baseline) == MAIN_NODES - DERIVATION_EXCLUSIONS.keys(), "VM baseline set drift"
+    print("PASS: full seven-node main VM set", flush=True)
+    for name, reason in DERIVATION_EXCLUSIONS.items():
+        print(f"EXCLUDED from derivation equality: {name}: {reason}", flush=True)
+    failures = []
+    for name, expected in baseline.items():
+        vm_expression = (
+            "let f = builtins.getFlake " + json.dumps("git+file://" + str(REPO)) + "; in "
+            "f.colmenaHive.nodes." + json.dumps(name) + ".config.system.build.toplevel.drvPath")
+        vm_result = subprocess.run(command[:-1] + [vm_expression], text=True, capture_output=True)
+        if vm_result.returncode:
+            print(vm_result.stderr, end="")
+            failures.append(f"{name}: evaluation failed (baseline: {expected!r})")
+        elif json.loads(vm_result.stdout) != expected:
+            failures.append(f"{name}: VM derivation drift: {vm_result.stdout.strip()} != {expected}")
+        else:
+            print(f"PASS: {name} exact VM drvPath", flush=True)
+    if failures:
+        raise SystemExit("VM acceptance failed:\n" + "\n".join(failures))
+    print(f"PASS: {len(baseline)} exact VM drvPaths; powerball explicitly excluded")
 
 
 if __name__ == "__main__":

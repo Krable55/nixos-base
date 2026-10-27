@@ -1,1 +1,8 @@
-{"builder":"/nix/store/1cyx6da9pfdilwcmq5mlpnsamhz6l61f-nixos-system-builder-25.05pre-git.drv","media-center":"/nix/store/m1g8hq3x9940bcrdfd5m811kbvxhg69d-nixos-system-media-center-25.05pre-git.drv","networking":"/nix/store/c5fnvhnhc0qmavxrvv6wr3zgzkbzciij-nixos-system-network-25.05pre-git.drv","powerball":"/nix/store/cl1nrpmi6jjcynr4ghw5qsg11arkjjls-nixos-system-powerball-25.05pre-git.drv"}
+{
+  "auth": "/nix/store/ds2lwlcxr6lfgxdj60p4nx0yb182zhzg-nixos-system-auth-26.11pre-git.drv",
+  "builder": "/nix/store/5j3gn0y76lcsbnzg1b3rgii2xca15dkm-nixos-system-builder-26.11pre-git.drv",
+  "lore": "/nix/store/ssaqhglsmr1x1rpn6hlgn8jwzqvzbfvr-nixos-system-lore-26.11pre-git.drv",
+  "media-center": "/nix/store/kc9mssaycnxpi7whwngnk91d38xk36qf-nixos-system-media-center-26.11pre-git.drv",
+  "networking": "/nix/store/qh499mbh89zy0hm93s4kdi018s5s7zm2-nixos-system-network-26.11pre-git.drv",
+  "trader": "/nix/store/n3wxizwm392dqvg6vddnk6f9c4nfp2zb-nixos-system-trader-26.11pre-git.drv"
+}

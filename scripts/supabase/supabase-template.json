@@ -1,0 +1,113 @@
+{
+  "title": "Supabase Instance",
+  "category": "DATABASE",
+  "fields": [
+    {
+      "id": "admin_username",
+      "type": "STRING",
+      "label": "Dashboard Admin Username",
+      "value": "admin"
+    },
+    {
+      "id": "admin_password",
+      "type": "CONCEALED",
+      "label": "Dashboard Admin Password",
+      "password_details": {
+        "strength": "FANTASTIC"
+      },
+      "generate": true,
+      "recipe": {
+        "length": 20,
+        "characterSets": ["LETTERS", "DIGITS", "SYMBOLS"]
+      },
+      "value": ""
+    },
+    {
+      "id": "postgres_user",
+      "type": "STRING",
+      "label": "PostgreSQL Username",
+      "value": "postgres"
+    },
+    {
+      "id": "postgres_password",
+      "type": "CONCEALED",
+      "label": "PostgreSQL Password",
+      "password_details": {
+        "strength": "FANTASTIC"
+      },
+      "generate": true,
+      "recipe": {
+        "length": 24,
+        "characterSets": ["LETTERS", "DIGITS"]
+      },
+      "value": ""
+    },
+    {
+      "id": "postgres_database",
+      "type": "STRING",
+      "label": "PostgreSQL Database",
+      "value": "postgres"
+    },
+    {
+      "id": "jwt_secret",
+      "type": "CONCEALED",
+      "label": "JWT Secret (32+ chars)",
+      "password_details": {
+        "strength": "FANTASTIC"
+      },
+      "generate": true,
+      "recipe": {
+        "length": 64,
+        "characterSets": ["LETTERS", "DIGITS"]
+      },
+      "value": ""
+    },
+    {
+      "id": "anon_key",
+      "type": "CONCEALED",
+      "label": "Anonymous API Key (JWT)",
+      "value": ""
+    },
+    {
+      "id": "service_role_key",
+      "type": "CONCEALED", 
+      "label": "Service Role Key (JWT)",
+      "value": ""
+    },
+    {
+      "id": "secret_key_base",
+      "type": "CONCEALED",
+      "label": "Secret Key Base (32+ chars)",
+      "password_details": {
+        "strength": "FANTASTIC"
+      },
+      "generate": true,
+      "recipe": {
+        "length": 64,
+        "characterSets": ["LETTERS", "DIGITS"]
+      },
+      "value": ""
+    },
+    {
+      "id": "vault_enc_key",
+      "type": "CONCEALED",
+      "label": "Vault Encryption Key (32+ chars)",
+      "password_details": {
+        "strength": "FANTASTIC"
+      },
+      "generate": true,
+      "recipe": {
+        "length": 64,
+        "characterSets": ["LETTERS", "DIGITS"]
+      },
+      "value": ""
+    },
+    {
+      "id": "notesPlain",
+      "type": "STRING",
+      "purpose": "NOTES",
+      "label": "Notes",
+      "value": "Supabase secrets for host. ANON_KEY and SERVICE_ROLE_KEY must be generated as JWTs using the JWT_SECRET. Use Supabase's JWT generator or jwt-cli with roles 'anon' and 'service_role' respectively."
+    }
+  ]
+}
