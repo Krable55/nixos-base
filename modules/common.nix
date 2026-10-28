@@ -81,6 +81,7 @@ imports = [
   ];
   openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMh4QcZWNLqRMaj0D5iKH3FDZ8n/rKJR6XFLNQs7bWsa my key for nixos"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOTa6Rd0c7R7Pwg8CSVwF6hLrZ2HIUdIz/hcvcK9o3nU kyll@omarchy-to-tower"
   ];
   };
 

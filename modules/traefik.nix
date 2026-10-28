@@ -195,15 +195,6 @@ in
             };
           };
 
-          atuin = {
-            rule    = "Host(`atuin.goobtube.tv`)";
-            service = "atuin-backend";
-            tls = {
-              certResolver = "leresolver";
-              domains = [ { main = "goobtube.tv"; sans = [ "*.goobtube.tv" ]; } ];
-            };
-          };
-
           # code-server was never actually deployed anywhere in the fleet
           # (checked every host's colmena config and the NAS's docker ps on
           # 2026-08-09) -- router removed rather than left pointing at
@@ -562,11 +553,6 @@ in
             };
           };
 
-          "atuin-backend" = {
-            loadBalancer = {
-              servers = [ { url = "http://127.0.0.1:8888"; } ];
-            };
-          };
         };
       };
     };

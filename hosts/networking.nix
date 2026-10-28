@@ -9,9 +9,7 @@
     ../modules/qbittorrent.nix
     ../modules/traefik.nix
     ../modules/cloudflared.nix
-    ../modules/claude-code.nix
     ../modules/agenix.nix
-    ../modules/atuin.nix
     ../modules/nuclio
     ../modules/nuclio/functions.nix
   ];
@@ -19,15 +17,6 @@
   networking.hostName = "network";
   custom.qbittorrent.enable = true;
   custom.cloudflared.enable = true;
-  custom.claude-code.enable = true;
-  
-  # Atuin shell history server
-  custom.atuin = {
-    enable = true;
-    openRegistration = false;
-    jwtSecretFile = config.age.secrets.atuin-jwt-secret.path;
-    databaseKeyFile = config.age.secrets.atuin-database-key.path;
-  };
 
   # Agenix secret for Tailscale
   age.secrets.tailscale-authkey = {
@@ -47,21 +36,6 @@
 
   age.secrets.trader-alpaca-paper-api-secret = {
     file = ../secrets/trader/alpaca/paper-api-secret.age;
-    owner = "root";
-    group = "root";
-    mode = "600";
-  };
-
-  # Atuin server secrets
-  age.secrets.atuin-jwt-secret = {
-    file = ../secrets/networking/atuin/jwt-secret.age;
-    owner = "root";
-    group = "root";
-    mode = "600";
-  };
-
-  age.secrets.atuin-database-key = {
-    file = ../secrets/networking/atuin/database-key.age;
     owner = "root";
     group = "root";
     mode = "600";
@@ -92,7 +66,6 @@
       8080 # Traefik
       8089 # qBittorent
       8090 # Sabnzbd
-      8888 # Atuin
       45036
     ];
   };
