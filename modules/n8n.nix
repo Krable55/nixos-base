@@ -4,8 +4,8 @@ let
   cfg = config.custom.n8n;
   n8nDataDir = "/var/lib/n8n";
 
-  # Pulled from a separate, newer nixpkgs pin (see flake.nix) since the
-  # main nixpkgs input only has n8n 2.32.6. NODE_OPTIONS raises tsc's V8
+  # Pulled from a separate, newer nixpkgs pin (see flake.nix). NODE_OPTIONS
+  # raises tsc's V8
   # heap ceiling for the `pnpm build --filter=n8n` step -- confirmed on
   # this exact host that the ~2GB default limit reliably OOMs partway
   # through compiling n8n's CLI package (deterministic, not a fluke: it

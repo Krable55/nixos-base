@@ -6,12 +6,9 @@
     # Isolated Pi lifecycle: do not upgrade the existing fleet package set.
     nixpkgs-pi.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    # Pinned to the nixpkgs commit that bumped n8n to 2.33.7 (merged
-    # 2026-08-09, PR NixOS/nixpkgs#550691) -- the main nixpkgs input above
-    # only has 2.32.6 as of this writing. Used only to pull the n8n
-    # package itself (see modules/n8n.nix); everything else stays on the
-    # main pin.
-    nixpkgs-n8n.url = "github:NixOS/nixpkgs/6d2c43d6d44ac102642231913e62272193393c98";
+    # Isolated n8n package set, pinned to the newest packaged release and
+    # its pnpm dependency-hash fix; everything else stays on the main pin.
+    nixpkgs-n8n.url = "github:NixOS/nixpkgs/63c387e843cb8747307f2a51e758a0e63a00958b";
 
     colmena = {
       url   = "github:zhaofengli/colmena";
@@ -73,6 +70,7 @@
       nfs             = import ./modules/nfs.nix;
       backup          = import ./modules/backup.nix;
       n8n             = import ./modules/n8n.nix;
+      paperclip       = import ./modules/paperclip.nix;
       supabase        = import ./modules/supabase.nix;
       claude          = import ./modules/claude-code.nix;
       agenix          = import ./modules/agenix.nix;

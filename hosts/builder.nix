@@ -7,6 +7,8 @@
     ../modules/colmena.nix
     ../modules/forgejo.nix
     ../modules/n8n.nix
+    ../modules/paperclip.nix
+    ../modules/claude-code.nix
     ../modules/agenix.nix
     # ../modules/nfs.nix
     # ../modules/backup.nix
@@ -18,6 +20,22 @@
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "n8n" ];
   custom.n8n.enable = true;
+
+  custom.paperclip = {
+    enable = true;
+    bindAddress = "192.168.50.243";
+    publicBaseUrl = "http://192.168.50.243:3100";
+    allowedHostnames = [
+      "192.168.50.243"
+      "builder"
+      "builder.local"
+      "localhost"
+      "127.0.0.1"
+    ];
+  };
+
+  custom.claude-code.enable = true;
+  environment.systemPackages = [ pkgs.codex ];
 
   # The Jellyseerr/Sonarr/Radarr -> Signal workflow keys its message state by
   # media id in workflow static data, which n8n reads at execution start and
