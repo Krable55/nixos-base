@@ -2,6 +2,7 @@
 {
 imports = [
   inputs."sops-nix".nixosModules.sops
+  ./core.nix
 ];
 
   # Provide a default hostname

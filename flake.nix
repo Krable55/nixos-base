@@ -143,7 +143,7 @@
       defaults = { imports = [ ./modules/common.nix ]; };
 
       pi4 = {
-        imports = [ ./hosts/pi4.nix ./modules/pi4-secrets.nix ./modules/pi4-chatgpt-auth.nix ./modules/pi4-siwc-adapter.nix ];
+        imports = [ ./hosts/pi4.nix ./modules/pi4-secrets.nix ./modules/pi4-chatgpt-auth.nix ./modules/pi4-siwc-adapter.nix ./modules/pi4-paperclip.nix ];
         deployment = {
           targetHost = "pi4.local";
           targetUser = "kyle";

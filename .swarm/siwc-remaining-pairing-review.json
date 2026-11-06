@@ -1,0 +1,41 @@
+{
+  "origin": "pi-pairing-review-sol",
+  "parent": "w7:p1",
+  "task": "pairing-review",
+  "status": "pending_wire_regression",
+  "overall": "fail_pending_acceptance_wire_fix",
+  "model": "gpt-5.6-sol",
+  "review_mode": "read_only_static",
+  "tests_executed": false,
+  "inspected": {
+    "packages/siwc-adapter/pairing_state.py": "8fb80b87095798f4d232bb6fdf69e86ac5493e521fd3cd836003fbd35afbd6cd",
+    "packages/siwc-adapter.nix": "bf295a852f194f0de2242617b96ffbca43ff39e81f9e401df25c16653d4ff619",
+    "modules/pi4-zeroclaw.nix": "1f332873ae3936472ba250a02616307b5d6b0564ba288ad9b36048e05537e9cb",
+    "tests/siwc-adapter/test_pairing_state.py": "a2418a4b089a58655d1c2b4aa3f65e2d2a7575b6483acc1aa689861dd124d0fd",
+    "tests/siwc-adapter/acceptance/paired_gateway.py": "c8d725564de6b081b73670e31a10acd1d6745c66ed08f035b2494674818d212d"
+  },
+  "pending": [
+    {
+      "severity": "blocker",
+      "file": "tests/siwc-adapter/acceptance/paired_gateway.py",
+      "lines": "235-246",
+      "finding": "WebSocket upgrade used a literal redacted bearer and omitted the terminating CRLF CRLF; implementer wire regression is pending."
+    }
+  ],
+  "resolved_or_superseded": [
+    {
+      "file": "tests/siwc-adapter/test_pairing_state.py",
+      "finding": "Distinct-UID canonical fixture defect",
+      "status": "reported_fixed_by_coordinator_after_inspection"
+    },
+    {
+      "finding": "Coordinator concerns: oneshot TimeoutStartSec, canonical raw-capability comparison, and FIFO O_NONBLOCK",
+      "status": "resolved_in_inspected_state"
+    }
+  ],
+  "limitations": [
+    "No tests or live systemd behavior were exercised.",
+    "Concurrent implementer changes must be reconciled against the recorded hashes.",
+    "Asynchronous path persistence leaves a power-loss window before snapshot; process termination is covered by ExecStopPost."
+  ]
+}
