@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, lib, ... }:
 {
   imports = [
     ../modules/common.nix
@@ -8,6 +8,8 @@
   ];
 
   networking.hostName = "pi4";
+  nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "claude-code";
+  environment.systemPackages = [ pkgs.bun pkgs.claude-code pkgs.codex ];
   # NetworkManager supplies Ethernet DHCP; no Wi-Fi credentials in the image.
   networking.networkmanager.enable = true;
 

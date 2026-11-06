@@ -1,0 +1,86 @@
+{
+  "task": "pi-dashboard",
+  "origin": "pi-dashboard-sol",
+  "status": "complete",
+  "source": {
+    "version": "0.8.6",
+    "revision": "c473221313341a853e04122f93bb9bd26b5e6c47",
+    "fetchedSource": "/nix/store/nxjl1nqnrq5n21wsa7mpxzvc5prza328-source",
+    "sourceNarHash": "sha256-6w2xwCeV4U957wiOt3B9iY+ayA90Q1YzdaSCXvEJNS4=",
+    "packageLockSha256": "e46b4dc22e923b8d753ff0ddaba346160b22f86d5b629650cfe6552dd85e9091",
+    "releaseArchiveSha256": "sha256-eeuHmR872Rro5u8C14szlhzR2HSVHf01EjTGkqApekc="
+  },
+  "package": {
+    "expression": "packages/zeroclaw-web.nix",
+    "drvPath": "/nix/store/1b7jd6ghny1wkzhsw5ldvd5hyjzgcwr9-zeroclaw-web-0.8.6.drv",
+    "outPath": "/nix/store/4w1s087jjzbjs0mf5lddgijc5ksyvqbl-zeroclaw-web-0.8.6",
+    "webDist": "/nix/store/4w1s087jjzbjs0mf5lddgijc5ksyvqbl-zeroclaw-web-0.8.6/share/zeroclaw-web",
+    "narHash": "sha256-DU6P1JXg1vX4R79V34/OVARC4VgV6CTL7jmOzVw4eY0=",
+    "narHashBase32": "sha256:13br71fcv3irxv5j9s0mb3hl412lrs7xymdz8zwgbmp0jpa8ykhd",
+    "narSize": 3844176,
+    "files": 69,
+    "payloadBytes": 3829419
+  },
+  "implementation": {
+    "method": "Package trusted official prebuilt web/dist from the fixed-output v0.8.6 GitHub release archive; assert the separately pinned source fetch, committed package-lock digest, and reviewed cargo web build workflow step.",
+    "provenance": "The fixed archive hash authenticates the downloaded bytes, and read-only Git/API checks confirm v0.8.6 resolves to the reviewed revision. These checks do not independently prove that the archive was built from that source or lockfile; the assets were not locally rebuilt or provenance-attested.",
+    "rustRebuild": false,
+    "npmRuntimeInstall": false,
+    "platformIndependent": true,
+    "portabilityEvidence": {
+      "x86_64AndAarch64ReleaseTreesIdentical": true,
+      "filesCompared": 69,
+      "contentManifestSha256": "3a49750673bc2c1c50642aae0e1f7e570c2f25467d27a0d136cc5484218bd526"
+    },
+    "rationale": "Upstream web builds first generate OpenAPI TypeScript from Rust, so a clean source-only npm build would violate the no-Rust-rebuild constraint. The reviewed release workflow specifies one web/dist build from the committed lockfile followed by reuse across architecture archives. Selecting the native x86_64 archive avoids ARM/QEMU work without changing the assets; x86_64 and aarch64 archive contents were independently compared byte-for-byte."
+  },
+  "tests": {
+    "nixBuild": "pass",
+    "nixAssetTest": {
+      "status": "pass",
+      "outPath": "/nix/store/6xma5i96yi2kvkl9injdm9jhv5pp77na-zeroclaw-web-assets-test",
+      "indexBytes": 2234,
+      "referencedAssets": 8,
+      "jsAndCssPresent": true
+    },
+    "aarch64Evaluation": {
+      "status": "pass",
+      "drvPath": "/nix/store/mcfwq1vzxjsbgzxyzm3h036nipwwldqs-zeroclaw-web-0.8.6.drv"
+    },
+    "liveGateway": {
+      "status": "pass",
+      "binary": "/nix/store/adkc7f6i4b46gaf1296ir59whcjva4cl-zeroclaw-0.8.6/bin/zeroclaw",
+      "rootHttpStatus": 200,
+      "rootContentType": "text/html",
+      "referencedAssetsFetched": 8,
+      "headlessChromiumDomRendered": true,
+      "visualState": "ZeroClaw pairing UI rendered correctly with logo, controls, and styling; no blank page or 503",
+      "screenshot": "/tmp/zeroclaw-web-ui.png",
+      "serverStoppedAfterTest": true,
+      "temporaryConfigRemoved": true,
+      "pairingPerformed": false
+    },
+    "legacyBaseline": {
+      "status": "pass",
+      "exactVmDrvPaths": 4,
+      "flakeLockExistingNodesUnchanged": true,
+      "flakeLockSha256": "e3d39f93517edf882f97446ed56a53ac778bc15e5df5b245ee1a12e59e74fdef"
+    }
+  },
+  "filesCreated": [
+    "packages/zeroclaw-web.nix",
+    "tests/zeroclaw-web/default.nix",
+    "tests/zeroclaw-web/check-assets.py",
+    ".swarm/pi-dashboard-report.json"
+  ],
+  "integration": [
+    "Instantiate with: zeroclawWeb = import ../packages/zeroclaw-web.nix { inherit pkgs; };",
+    "Set the generated ZeroClaw TOML value gateway.web_dist_dir to ${zeroclawWeb}/share/zeroclaw-web.",
+    "The Nix string reference keeps the assets in the system closure; no service, port, firewall, or binary-package change is required."
+  ],
+  "limitations": [
+    "The GitHub release archive is a trusted official prebuilt input, not a locally rebuilt or independently provenance-attested artifact.",
+    "No deployment, SSH, reboot, service installation, firewall change, credentials, provider call, or pairing was performed.",
+    "The dashboard was accepted locally against the pinned production binary; deployed Pi acceptance remains the integrating worker's later gate."
+  ]
+}
