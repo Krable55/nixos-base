@@ -134,7 +134,15 @@
           system = "x86_64-linux";
         };
         specialArgs = {inherit inputs outputs;};
-        nodeNixpkgs.pi4 = import inputs.nixpkgs-pi { system = "aarch64-linux"; };
+        nodeNixpkgs.pi4 = import inputs.nixpkgs-pi {
+          system = "aarch64-linux";
+          overlays = [
+            # The Pi pin lacks Herdr; take only this package from the fleet pin.
+            (_final: _prev: {
+              herdr = (import nixpkgs { system = "aarch64-linux"; }).herdr;
+            })
+          ];
+        };
       };
 
       # “defaults” get merged into every node’s config
@@ -191,6 +199,9 @@
         imports = [ ./base.nix ./hosts/auth.nix ];
       };
 
+      # Offline in Proxmox: exclude powerball and trader from Colmena evaluation
+      # and apply. Remove this block comment to re-enable their node definitions.
+      /*
       powerball = { config, pkgs, lib, ... }: {
         deployment = {
           targetHost    = "192.168.50.119";
@@ -210,6 +221,7 @@
         };
         imports = [ ./base.nix ./hosts/trader.nix ];
       };
+      */
 
       lore = { config, pkgs, lib, ... }: {
         deployment = {
