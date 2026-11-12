@@ -57,7 +57,15 @@
     nixosConfigurations.pi4-image = inputs.nixpkgs-pi.lib.nixosSystem {
       system = "aarch64-linux";
       specialArgs = { inherit inputs outputs; };
-      modules = [ ./hosts/pi4.nix ./images/pi4.nix ];
+      modules = [
+        ./hosts/pi4.nix
+        ./images/pi4.nix
+        # Match the deployed Pi: its package pin does not include Herdr.
+        { nixpkgs.overlays = [ (_final: _prev: {
+            herdr = (import nixpkgs { system = "aarch64-linux"; }).herdr;
+          }) ];
+        }
+      ];
     };
     packages.aarch64-linux.pi4-image =
       self.nixosConfigurations.pi4-image.config.system.build.sdImage;
@@ -149,7 +157,7 @@
       defaults = { imports = [ ./modules/common.nix ]; };
 
       pi4 = {
-        imports = [ ./hosts/pi4.nix ./modules/pi4-secrets.nix ./modules/pi4-chatgpt-auth.nix ./modules/pi4-siwc-adapter.nix ./modules/pi4-paperclip.nix ];
+        imports = [ ./hosts/pi4.nix ./modules/pi4-secrets.nix ./modules/pi4-paperclip.nix ];
         deployment = {
           targetHost = "pi4.local";
           targetUser = "kyle";
