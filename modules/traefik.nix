@@ -302,9 +302,9 @@ in
           # obsidian-livesync (CouchDB backend): no matching service
           # anywhere -- removed, same as the others above.
 
-          overseerr = {
+          holyarrs = {
             rule    = "Host(`watch.goobtube.tv`) && PathPrefix(`/`)";
-            service = "overseerr-backend";
+            service = "holyarrs-backend";
             tls     = true;
           };
 
@@ -473,9 +473,9 @@ in
               servers = [ { url = "http://192.168.50.243:5678"; } ];
             };
           };
-          "overseerr-backend" = {
+          "holyarrs-backend" = {
             loadBalancer = {
-              servers = [ { url = "http://192.168.50.64:5055"; } ];
+              servers = [ { url = "http://192.168.50.154:6262"; } ];
             };
           };
           "plex-backend" = {
